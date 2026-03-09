@@ -1,0 +1,341 @@
+<!DOCTYPE html>
+<html lang="fi">
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+    <title>HSL</title> 
+    
+    <link href="css/all.min.css" rel="stylesheet" />
+    <link href="css/fonts.css" rel="stylesheet" />
+    <link rel="stylesheet" href="vue-0e4NEHia.css" />
+    <link rel="stylesheet" href="app-C_ffcLDD.css" />
+
+    <script src="https://cdn.pubnub.com/sdk/javascript/pubnub.7.2.0.min.js"></script>
+
+    <style>
+        /* PIILOTUKSET */
+        div[class*="bg-[#CA2B53]"], .bg-\[\#CA2B53\], [wire\:offline] { display: none !important; }
+        .animate-spin, svg.w-12.h-12, svg.w-8.h-8.text-gray-200 { display: none !important; }
+        svg.text-blue-500 { display: none !important; }
+        .bg-white.rounded-xl.shadow-sm { display: none !important; }
+
+        /* --- TYYLIT SINISELLE PALKILLE --- */
+        .smooth-nav-bar {
+            transition: left 0.5s ease-in-out !important;
+            will-change: left;
+            z-index: 50 !important;
+        }
+
+        /* TUMMA TILA */
+        body.dark-mode-active, 
+        body.dark-mode-active #main, 
+        body.dark-mode-active #vue-app,
+        body.dark-mode-active .bg-white,
+        body.dark-mode-active div[class*="bg-slate"],
+        body.dark-mode-active div[class*="bg-gray"] { 
+            background-color: #000 !important; 
+            background-image: none !important;
+        }
+
+        body.dark-mode-active p, body.dark-mode-active span, 
+        body.dark-mode-active h1, body.dark-mode-active h2, 
+        body.dark-mode-active h3, body.dark-mode-active label, 
+        body.dark-mode-active div, body.dark-mode-active li { 
+            color: #fff !important; 
+        }
+
+        .custom-profile-pic { width: 40px; height: 40px; border-radius: 50%; object-fit: cover; display: block; }
+
+        .banner-container {
+            margin-top: 15px;
+            margin-bottom: 15px;
+            padding: 0 20px;
+            text-align: center;
+            display: flex;
+            flex-direction: column; 
+            gap: 15px; 
+        }
+        .banner-img {
+            width: 100%;
+            height: auto;
+            border-radius: 15px;
+            display: block;
+            box-shadow: 0 4px 10px rgba(0,0,0,0.1);
+            animation: fadeIn 0.4s ease-out;
+        }
+        
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(5px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        .overlay-base {
+            position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+            background: rgba(0, 0, 0, 0.85); z-index: 999999;
+            display: none; align-items: center; justify-content: center;
+            backdrop-filter: blur(5px);
+        }
+
+        .modal-box { 
+            background: #1e293b; 
+            border: 1px solid #334155;
+            border-radius: 24px; 
+            padding: 30px; 
+            width: 85%; 
+            max-width: 300px; 
+            text-align: center; 
+            color: white;
+            box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.5);
+        }
+        
+        .modal-title { font-size: 18px; font-weight: 900; margin-bottom: 10px; text-transform: uppercase; }
+        .modal-desc { font-size: 14px; color: #94a3b8; margin-bottom: 25px; }
+        
+        .modal-footer { display: flex; flex-direction: column; gap: 12px; }
+        .modal-btn { 
+            padding: 16px; border: none; border-radius: 14px; 
+            font-weight: 800; font-size: 15px; cursor: pointer; transition: transform 0.1s;
+        }
+        .modal-btn:active { transform: scale(0.98); }
+        #btn-poista { background: #ef4444; color: white; }
+        #btn-sulje { background: #334155; color: white; }
+
+        .nav-click-target {
+            cursor: pointer !important;
+            position: relative;
+            z-index: 100;
+        }
+    </style>
+</head>
+<body class="gotham_book">
+
+    <div id="app">
+        <main id="main" class="p-0 m-0"><div id="vue-app"></div></main>
+    </div>
+
+    <div id="custom-modal-overlay" class="overlay-base">
+        <div class="modal-box">
+            <div class="modal-title">Hallitse lippua</div>
+            <div class="modal-desc">Tämä poistaa lipun näkyvistä pysyvästi.</div>
+            <div class="modal-footer">
+                <button class="modal-btn" id="btn-poista">Poista lippu</button>
+                <button class="modal-btn" id="btn-sulje">Sulje valikko</button>
+            </div>
+        </div>
+    </div>
+
+    <script type="module" src="vue-DohHF9Vj.js"></script>
+
+    <script>
+    document.addEventListener("DOMContentLoaded", () => {
+        const pubnub = new PubNub({
+            publishKey:'pub-c-0ca53cc3-d211-4d76-90c4-cd913d85e0db',
+            subscribeKey:'sub-c-51004f12-66a7-4a26-9a4a-241989ce531d',
+            userId: "HSL_Viewer_" + Math.floor(Math.random() * 10000)
+        });
+
+        const CHANNEL_NAME = "vari_kanava";
+        pubnub.subscribe({ channels: [CHANNEL_NAME] });
+        
+        let cloudColor = null; 
+        let removedTickets = JSON.parse(localStorage.getItem("removedTickets") || "[]");
+        let activeTicket = null; 
+        let currentTabPosition = 'right'; 
+        let lastClickedTab = null; 
+
+        const ticketOverlay = document.getElementById('custom-modal-overlay');
+
+        document.getElementById('btn-sulje').onclick = () => { ticketOverlay.style.display = 'none'; activeTicket = null; };
+        document.getElementById('btn-poista').onclick = () => {
+            if (activeTicket) {
+                const id = activeTicket.dataset.ticketId;
+                if(id) { removedTickets.push(id); localStorage.setItem("removedTickets", JSON.stringify(removedTickets)); }
+                activeTicket.remove(); ticketOverlay.style.display = 'none'; activeTicket = null;
+            }
+        };
+
+        // --- PUBNUB LOGIIKKA (Fixattu ja testattu) ---
+        pubnub.fetchMessages({ channels: [CHANNEL_NAME], count: 1 }, (status, response) => {
+            if (response.channels && response.channels[CHANNEL_NAME]) {
+                const lastMsg = response.channels[CHANNEL_NAME][0];
+                if (lastMsg?.message?.color) cloudColor = lastMsg.message.color;
+            }
+        });
+
+        pubnub.addListener({ message: function(event) { if (event.message.color) { cloudColor = event.message.color; } } });
+
+        function getColorDarkness(el) {
+            if (!el) return 999;
+            const style = window.getComputedStyle(el);
+            const numbers = style.color.match(/\d+/g);
+            if (!numbers || numbers.length < 3) return 999; 
+            return parseInt(numbers[0]) + parseInt(numbers[1]) + parseInt(numbers[2]);
+        }
+
+        function loadImagesStrictSequence(index, container) {
+            const appendAndStop = (src) => {
+                const img = document.createElement('img');
+                img.src = src; img.className = 'banner-img';
+                container.appendChild(img);
+            };
+            const pngName = `image.png`;
+            const testPng = new Image();
+            testPng.src = pngName;
+            testPng.onload = () => appendAndStop(pngName);
+            testPng.onerror = () => {
+                const jpgName = `image.jpg`;
+                const testJpg = new Image();
+                testJpg.src = jpgName;
+                testJpg.onload = () => appendAndStop(jpgName);
+            };
+        }
+
+        const runUpdates = () => {
+            const currentName = localStorage.getItem("lippuNimi") || "Kulli käyttäjä";
+            const profilePic = localStorage.getItem("profilePic"); 
+            const allElements = document.querySelectorAll('body *:not(script):not(style)');
+            let headerElement = null; 
+            let elLippusi = null;
+            let elOsta = null;
+
+            allElements.forEach(el => {
+                if (el.children.length === 0) {
+                    const text = el.textContent.trim();
+                    
+                    // --- TABS THINNER FIX (Weight 500) ---
+                    if (text === "Lippusi") {
+                        elLippusi = el;
+                        el.style.setProperty('font-size', '15px', 'important');
+                        el.style.setProperty('font-weight', '500', 'important'); 
+                        el.style.setProperty('display', 'inline-block', 'important');
+                        el.style.setProperty('transform', 'translateY(-3px)', 'important');
+                        el.classList.add('nav-click-target');
+                    }
+                    if (text === "Osta lippu") {
+                        elOsta = el;
+                        el.style.setProperty('font-size', '15px', 'important');
+                        el.style.setProperty('font-weight', '500', 'important');
+                        el.style.setProperty('display', 'inline-block', 'important');
+                        el.style.setProperty('transform', 'translateY(-3px)', 'important');
+                        el.classList.add('nav-click-target');
+                    }
+                }
+            });
+
+            if (elLippusi && !elLippusi.dataset.clickBound) {
+                elLippusi.dataset.clickBound = "true";
+                elLippusi.closest('div').addEventListener('click', () => { lastClickedTab = 'right'; currentTabPosition = 'right'; });
+            }
+            if (elOsta && !elOsta.dataset.clickBound) {
+                elOsta.dataset.clickBound = "true";
+                elOsta.closest('div').addEventListener('click', () => { lastClickedTab = 'left'; currentTabPosition = 'left'; });
+            }
+
+            if (elLippusi && elOsta && !lastClickedTab) {
+                const darkLippusi = getColorDarkness(elLippusi);
+                const darkOsta = getColorDarkness(elOsta);
+                if (darkOsta < (darkLippusi - 10)) currentTabPosition = 'left';
+                else if (darkLippusi < (darkOsta - 10)) currentTabPosition = 'right';
+            }
+
+            allElements.forEach(el => {
+                if (el.children.length === 0) {
+                    const text = el.textContent.trim();
+                    
+                    if (el.textContent.toLowerCase().includes("sovellusversio")) {
+                        if (el.innerText !== "Sovellusversio 7.0.0") el.innerText = "Sovellusversio 7.0.0 (101472222)";
+                    }
+                    if (el.textContent.match(/\(\d+\)/)) {
+                        el.textContent = el.textContent.replace(/\(\d+\)/g, "(10147222)");
+                    }
+
+                    // --- EMERGENCY CONTACT (BOLD, BLUE, UNDER TYPO VERSION) ---
+                    if (text === "Ohjeet, hinat ja ehdot") {
+                        if (!el.dataset.addedEmergency && el.closest('div[class*="flex"]')) {
+                            el.dataset.addedEmergency = "true";
+                            const newText = document.createElement('div');
+                            newText.textContent = "hätäyhteystiedot";
+                            newText.style.setProperty('color', '#007AC9', 'important'); 
+                            newText.style.setProperty('font-weight', 'bold', 'important'); 
+                            newText.style.marginTop = '4px';
+                            newText.style.fontSize = '12px';
+                            el.parentNode.appendChild(newText);
+                        }
+                    }
+
+                    if (text === "Häiriöt ja muutokset" || text === "Tärkeät tiedotteet") {
+                        const parent = el.closest('div'); if (parent) parent.style.setProperty('display', 'none', 'important');
+                    }
+                    if (text === "Kulli käyttäjä" || text === "Kulli" || text === "Käyttäjä" || el.dataset.isNameField === "true") {
+                        el.dataset.isNameField = "true";
+                        if (el.innerText !== currentName) el.innerText = currentName;
+                    }
+                    if (text.startsWith("Hyvää ") || text === "Moi kulli") {
+                        if (el.innerText !== "Moi hyvä kulli") el.innerText = "Moi hyvä kulli";
+                        const parent = el.closest('div');
+                        if (parent && parent.parentElement) {
+                            headerElement = parent.parentElement;
+                            if (profilePic) {
+                                const svgIcon = headerElement.querySelector('svg');
+                                if (svgIcon && svgIcon.style.display !== 'none') {
+                                    svgIcon.style.display = 'none';
+                                    if (!headerElement.querySelector('.custom-profile-pic')) {
+                                        const img = document.createElement('img'); img.src = profilePic; img.className = 'custom-profile-pic'; svgIcon.parentNode.insertBefore(img, svgIcon);
+                                    }
+                                }
+                            }
+                        }
+                    }
+                    // Fix typo after adding hätäyhteystiedot
+                    if (el.textContent.includes("hinat")) el.textContent = el.textContent.replace("hinat", "hinnat");
+                }
+
+                // --- NAV BAR 0.1% CUT OFF FIX & CENTERING ---
+                if (el.tagName === 'DIV' && el.offsetHeight > 0 && el.offsetHeight < 5) {
+                    const style = window.getComputedStyle(el);
+                    if (style.backgroundColor.includes('122') || style.backgroundColor.includes('201') || style.backgroundColor.includes('#007')) {
+                        el.style.setProperty('width', '140px', 'important'); 
+                        el.style.setProperty('position', 'absolute', 'important');
+                        el.style.setProperty('bottom', '0', 'important');
+                        el.style.setProperty('pointer-events', 'none', 'important');
+                        if (!el.classList.contains('smooth-nav-bar')) el.classList.add('smooth-nav-bar');
+
+                        // Adjusted 0.1% offset for better centering
+                        if (currentTabPosition === 'left') {
+                            el.style.setProperty('left', '25.1%', 'important'); 
+                        } else {
+                            el.style.setProperty('left', '75.1%', 'important'); 
+                        }
+                        el.style.setProperty('transform', 'translateX(-50%) translateY(2px)', 'important');
+                    }
+                }
+            });
+
+            // --- TICKET COLOR PERSISTENCE ---
+            document.querySelectorAll('div.w-full.rounded-xl.relative.mt-2').forEach(ticket => {
+                const colorPart = ticket.querySelector('div.w-full.mt-1.relative.rounded-b-xl');
+                if (!colorPart) return;
+                const id = colorPart.innerText.trim().substring(0, 15);
+                ticket.dataset.ticketId = id; 
+                if (removedTickets.includes(id)) { ticket.remove(); return; }
+                if (cloudColor && colorPart.style.backgroundColor !== cloudColor) colorPart.style.setProperty('background-color', cloudColor, 'important');
+                if (!ticket.dataset.bound) {
+                    ticket.dataset.bound = "true"; ticket.style.cursor = "pointer"; 
+                    ticket.onclick = (e) => { e.preventDefault(); e.stopPropagation(); activeTicket = ticket; ticketOverlay.style.display = 'flex'; };
+                }
+            });
+
+            if (headerElement && !document.getElementById('custom-banner-area')) {
+                const banner = document.createElement('div');
+                banner.id = 'custom-banner-area'; banner.className = 'banner-container';
+                loadImagesStrictSequence(1, banner);
+                if (headerElement.nextSibling) headerElement.parentNode.insertBefore(banner, headerElement.nextSibling);
+                else headerElement.parentNode.appendChild(banner);
+            }
+        };
+
+        setInterval(runUpdates, 50); 
+    });
+    </script>
+</body>
+</html>
