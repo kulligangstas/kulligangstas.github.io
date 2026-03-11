@@ -298,6 +298,7 @@ fetch("https://countapi.mileshilliard.com/api/v1/get/kullihsl" + getWeekNumber()
 
                     if (text === "Häiriöt ja muutokset" || text === "Tärkeät tiedotteet") {
                         text = "Kulli on korjattu!";
+                        el.classList.add("hedhelp");
                     }
                     if (text === "Kulli käyttäjä" || text === "Kulli" || text === "Käyttäjä" || el.dataset.isNameField === "true") {
                         el.dataset.isNameField = "true";
@@ -319,7 +320,7 @@ fetch("https://countapi.mileshilliard.com/api/v1/get/kullihsl" + getWeekNumber()
                             headerElement = parent.parentElement;
                             if (profilePic) {
                                 const svgIcon = headerElement.querySelector('svg');
-                                if (svgIcon && svgIcon.style.display !== 'none') {
+                                if (svgIcon && svgIcon.classList.contains("hedhelp")) {
                                     svgIcon.style.display = 'none';
                                     if (!headerElement.querySelector('.custom-profile-pic')) {
                                         const img = document.createElement('img'); img.src = profilePic; img.className = 'custom-profile-pic'; svgIcon.parentNode.insertBefore(img, svgIcon);
