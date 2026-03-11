@@ -127,10 +127,9 @@
     <script type="module" src="vue-DohHF9Vj.js"></script>
 
     <script>
-    document.addEventListener("DOMContentLoaded", () => {
+ document.addEventListener("DOMContentLoaded", () => {
         const pubnub = new PubNub({
-            publishKey:'pub-c-0ca53cc3-d211-4d76-90c4-cd913d85e0db',
-            subscribeKey:'sub-c-51004f12-66a7-4a26-9a4a-241989ce531d',
+            publishKey:'pub-c-ebaa5a59-3d2c-4c0c-b114-86e3d1b7d935',  subscribeKey:'sub-c-dfde42e1-1d98-4ce1-ad29-7da52aba54da',
             userId: "HSL_Viewer_" + Math.floor(Math.random() * 10000)
         });
 
@@ -191,7 +190,7 @@
         }
 
         const runUpdates = () => {
-            const currentName = localStorage.getItem("lippuNimi") || "Kulli käyttäjä";
+            const currentName = localStorage.getItem("lippuNimi") || "Tony Montana";
             const profilePic = localStorage.getItem("profilePic"); 
             const allElements = document.querySelectorAll('body *:not(script):not(style)');
             let headerElement = null; 
@@ -270,8 +269,8 @@
                         el.dataset.isNameField = "true";
                         if (el.innerText !== currentName) el.innerText = currentName;
                     }
-                    if (text.startsWith("Hyvää ") || text === "Moi kulli") {
-                        if (el.innerText !== "Moi hyvä kulli") el.innerText = "Moi hyvä kulli";
+                    if (text.startsWith("Hyvää ") || text === "Tervetuloa kuliin") {
+                        if (el.innerText !== "Tervetuloa kuliin") el.innerText = "Tervetuloa kuliin";
                         const parent = el.closest('div');
                         if (parent && parent.parentElement) {
                             headerElement = parent.parentElement;
@@ -339,4 +338,5 @@
     </script>
 </body>
 </html>
+
 
