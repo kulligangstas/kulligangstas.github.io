@@ -1,2 +1,8 @@
-sda
-
+<svg width="256" height="256" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+  <rect width="24" height="24" fill="hsl(203,79%,40%)"/>
+  
+  <path d="M12 4L3 20H21L12 4Z" fill="white"/>
+  
+  <rect x="11" y="9" width="2" height="6" fill="hsl(203,79%,40%)"/>
+  <circle cx="12" cy="17" r="1.2" fill="hsl(203,79%,40%)"/>
+</svg>
