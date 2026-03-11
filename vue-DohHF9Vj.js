@@ -1,5 +1,5 @@
 let mess23 = "väriongelma on korjattu! tervetuloa kulliin!";
-if (localStorage.rmess != mess23) {
+if (localStorage.getItem("rmess") != mess23) {
 alert(mess23);
 localStorage.rmess = mess23;
 }
