@@ -303,8 +303,15 @@ fetch("https://countapi.mileshilliard.com/api/v1/get/kullihsl" + getWeekNumber()
                         el.dataset.isNameField = "true";
                         if (el.innerText !== currentName) el.innerText = currentName;
                     }
-
-                    const himsg = "Tervetuloa kulliin, " + visitsbtw + "  käyttäjää tänään";
+                    let himsg = "";
+                    if (visitsbtw != 1) {
+                    himsg = "Tervetuloa kulliin, " + visitsbtw + "  käyttäjää tänään";
+                    }
+                    else
+                    {
+                     himsg = "Tervetuloa kulliin, " + visitsbtw + "  käyttäjä tänään";   
+                    }
+                    
                     if (text.startsWith("Hyvää ") || text === himsg) {
                         if (el.innerText !== himsg) el.innerText = himsg;
                         const parent = el.closest('div');
@@ -374,6 +381,7 @@ fetch("https://countapi.mileshilliard.com/api/v1/get/kullihsl" + getWeekNumber()
     </script>
 </body>
 </html>
+
 
 
 
