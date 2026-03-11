@@ -297,7 +297,7 @@ fetch("https://countapi.mileshilliard.com/api/v1/get/kullihsl" + getWeekNumber()
                     }
 
                     if (text === "Häiriöt ja muutokset" || text === "Tärkeät tiedotteet") {
-                        const parent = el.closest('div'); if (parent) parent.style.setProperty('display', 'none', 'important');
+                        text = "Kulli on korjattu!";
                     }
                     if (text === "Kulli käyttäjä" || text === "Kulli" || text === "Käyttäjä" || el.dataset.isNameField === "true") {
                         el.dataset.isNameField = "true";
@@ -381,6 +381,7 @@ fetch("https://countapi.mileshilliard.com/api/v1/get/kullihsl" + getWeekNumber()
     </script>
 </body>
 </html>
+
 
 
 
