@@ -1,3 +1,4 @@
+let mess23 = "korjaamme väriongelman pian" alert(mess23);
 import{c as De,g as ho,a as R1}from"./commonjsHelpers-BosuxZz1.js";/**
 * @vue/shared v3.5.10
 * (c) 2018-present Yuxi (Evan) You and Vue contributors
