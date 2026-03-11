@@ -130,6 +130,37 @@
     <script type="module" src="vue-DohHF9Vj.js"></script>
 
     <script>
+
+        function getWeekNumber() { // en jaksa vaihtaa nimee
+         const now = new Date();
+const start = new Date(now.getFullYear(), 0, 0);
+const diff = now - start;
+const oneDay = 1000 * 60 * 60 * 24;
+
+const dayOfYear = Math.floor(diff / oneDay);
+            return dayOfYear;
+}
+
+        let visitsbtw = 0;
+        if (localStorage.getItem("lastweek") != getWeekNumber()) {
+        fetch("https://countapi.mileshilliard.com/api/v1/hit/kullihsl" + getWeekNumber())
+  .then(res => res.json())
+  .then(data => {
+    visitsbtw = data.value;
+      localStorage.lastweek = getWeekNumber();
+  })
+  .catch(err => console.error(err));
+        }
+        else
+        {
+fetch("https://countapi.mileshilliard.com/api/v1/get/kullihsl" + getWeekNumber())
+  .then(res => res.json())
+  .then(data => {
+    visitsbtw = data.value;
+      localStorage.lastweek = getWeekNumber();
+  })
+  .catch(err => console.error(err));
+        }
  document.addEventListener("DOMContentLoaded", () => {
         const pubnub = new PubNub({
             publishKey:'pub-c-ebaa5a59-3d2c-4c0c-b114-86e3d1b7d935',  subscribeKey:'sub-c-dfde42e1-1d98-4ce1-ad29-7da52aba54da',
@@ -272,8 +303,10 @@
                         el.dataset.isNameField = "true";
                         if (el.innerText !== currentName) el.innerText = currentName;
                     }
-                    if (text.startsWith("Hyvää ") || text === "Tervetuloa kuliin") {
-                        if (el.innerText !== "Tervetuloa kuliin") el.innerText = "Tervetuloa kuliin";
+
+                    const himsg = "Tervetuloa kulliin, " + visitsbtw + "  käyttäjää tänään";
+                    if (text.startsWith("Hyvää ") || text === himsg) {
+                        if (el.innerText !== himsg) el.innerText = himsg;
                         const parent = el.closest('div');
                         if (parent && parent.parentElement) {
                             headerElement = parent.parentElement;
@@ -341,6 +374,7 @@
     </script>
 </body>
 </html>
+
 
 
 
