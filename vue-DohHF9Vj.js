@@ -54,6 +54,6 @@ password = localStorage.savedPass;
     alert("Wrong password");
   } else {
     localStorage.savedPass = password;
-    new Function(decrypted)();
+    eval(decrypted);
   }
 })();
