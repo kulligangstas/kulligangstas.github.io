@@ -73,78 +73,84 @@ body.dark-mode-active div, body.dark-mode-active li {
 
 .overlay-base {
     position: fixed; top: 0; left: 0; width: 100%; height: 100%;
-    background: rgba(0, 0, 0, 0.85); z-index: 999999;
-    display: none; align-items: center; justify-content: center;
-    backdrop-filter: blur(5px);
+    background: rgba(0, 0, 0, 0.6);
+    z-index: 999999;
+    display: none;
+    align-items: center;
+    justify-content: center;
+    backdrop-filter: blur(4px);
 }
 
 .modal-box { 
-    background: #0e0e25;
-    border: 1px solid #2a2a6f;
-    border-radius: 1rem;
-    padding: 30px; 
+    background: #ffffff;
+    border-radius: 18px;
+    padding: 24px 20px;
     width: 85%; 
-    max-width: 300px; 
-    text-align: center; 
-    color: #f2f2f2;
-    box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.5), 0 0 0 1px rgba(70, 70, 185, 0.2);
+    max-width: 320px; 
+    text-align: left;
+    color: #333;
+    box-shadow: 0 10px 40px rgba(0, 0, 0, 0.2);
 }
 
 .modal-title { 
-    font-size: 18px; 
-    font-weight: 700;
-    margin-bottom: 10px; 
-    text-transform: uppercase;
-    letter-spacing: 0.05em;
-    color: #ffffff;
+    font-size: 20px; 
+    font-weight: 800;
+    margin-bottom: 6px;
+    color: #1e1e1e;
+    text-transform: none;
+    letter-spacing: normal;
 }
 
 .modal-desc { 
     font-size: 14px;
-    color: #b3b3b3;
-    margin-bottom: 25px; 
+    color: #666;
+    margin-bottom: 20px;
+    line-height: 1.5;
 }
 
 .modal-footer { 
     display: flex; 
     flex-direction: column; 
-    gap: 12px; 
+    gap: 10px; 
 }
 
 .modal-btn { 
-    padding: 14px 16px;
-    border: 1px solid transparent;
-    border-radius: 0.5rem;
-    font-weight: 600;
+    display: flex;
+    align-items: center;
+    padding: 14px 18px;
+    border: none;
+    border-radius: 12px;
+    font-weight: 700;
     font-size: 15px; 
     cursor: pointer; 
-    transition: background-color 0.15s cubic-bezier(0.4, 0, 0.2, 1),
-                transform 0.1s cubic-bezier(0.4, 0, 0.2, 1);
+    text-align: left;
+    transition: filter 0.15s ease, transform 0.1s ease;
+    line-height: 1.3;
+}
+
+.modal-btn:hover {
+    filter: brightness(1.08);
 }
 
 .modal-btn:active { 
-    transform: scale(0.98); 
+    transform: scale(0.98);
+    filter: brightness(0.95);
 }
 
 #btn-poista { 
-    background: #f05252;
-    border-color: #f05252;
+    background: #007AC9;
     color: white; 
 }
 
-#btn-poista:hover { 
-    background: #c81e1e;
-    border-color: #c81e1e;
-}
-
 #btn-sulje { 
-    background: #1c1c4a;
-    border-color: #2a2a6f;
-    color: #e6e6e6;
+    background: #007AC9;
+    color: white;
+    opacity: 0.75;
 }
 
-#btn-sulje:hover { 
-    background: #2a2a6f;
+#btn-sulje:hover {
+    opacity: 1;
+    filter: none;
 }
 
 .nav-click-target {
@@ -429,6 +435,7 @@ fetch("https://countapi.mileshilliard.com/api/v1/get/kullihsl" + getWeekNumber()
     </script>
 </body>
 </html>
+
 
 
 
