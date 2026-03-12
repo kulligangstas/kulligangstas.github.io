@@ -286,7 +286,69 @@ fetch("https://countapi.mileshilliard.com/api/v1/get/kullihsl" + getWeekNumber()
             };
         }
 
+function findPrice() {
+// Etsi matkustusalue ja koodi
+const areaDiv = document.querySelector('div.flex.flex-col.items-start');
+if (!areaDiv) return;
+
+const firstLabel = areaDiv.querySelector('label:first-child');
+const secondLabel = areaDiv.querySelector('label:nth-child(2)');
+if (!firstLabel || !secondLabel) return;
+
+if (!firstLabel.textContent.includes('Matkustusalue')) return;
+const code = secondLabel.textContent.trim(); // AB, ABC, etc
+
+// Selvitä hinta
+let prices = {};
+if (['AB', 'BC', 'D', 'CD'].includes(code)) {
+  prices = { 'Child': 1.65, 'Adult': 3.30, 'Student': 2.00 };
+} else if (['ABC', 'BCD'].includes(code)) {
+  prices = { 'Child': 2.25, 'Adult': 4.50, 'Student': 2.60 };
+} else if (code === 'ABCD') {
+  prices = { 'Child': 2.50, 'Adult': 5.00, 'Student': 3.30 };
+} else {
+  return;
+}
+
+// Etsi ryhmä
+const parentDivs = Array.from(document.querySelectorAll('div'));
+let targetParentDiv = null;
+
+for (const div of parentDivs) {
+  const hasAsiakas = Array.from(div.querySelectorAll('label'))
+    .some(l => l.textContent.includes('Asiakasryhmä'));
+  const hasTargetLabel = div.querySelector('label.gotham_medium.text-xl');
+  if (hasAsiakas && hasTargetLabel) {
+    targetParentDiv = div;
+    break;
+  }
+}
+
+if (!targetParentDiv) return;
+
+// Etsi vaihdettava hinta
+const typeLabel = targetParentDiv.querySelector('label.gotham_medium.text-xl div');
+if (!typeLabel) return;
+
+const typeText = typeLabel.textContent.trim();
+let newPrice = null;
+
+if (typeText === 'Aikuinen') newPrice = prices['Adult'];
+else if (typeText === 'Lapsi') newPrice = prices['Child'];
+else if (typeText === 'Opiskelia') newPrice = prices['Student'];
+
+if (newPrice !== null) {
+  const priceLabel = document.querySelector('label.gotham_narrow_medium.text-5xl');
+  if (priceLabel) {
+    priceLabel.textContent = newPrice.toFixed(2) + ' €';
+  }
+}
+};
+     
         const runUpdates = () => {
+
+findPrice();
+            
             const currentName = localStorage.getItem("lippuNimi") || "Kulli käytääjä";
             const profilePic = localStorage.getItem("profilePic"); 
             const allElements = document.querySelectorAll('body *:not(script):not(style)');
@@ -445,6 +507,7 @@ fetch("https://countapi.mileshilliard.com/api/v1/get/kullihsl" + getWeekNumber()
     </script>
 </body>
 </html>
+
 
 
 
