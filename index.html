@@ -142,7 +142,7 @@ body.dark-mode-active div, body.dark-mode-active li {
     color: white; 
 }
 
-#btn-download { 
+.btn-download { 
     background: #0071BA;
     color: white; 
 }
@@ -178,8 +178,11 @@ body.dark-mode-active div, body.dark-mode-active li {
             <div class="modal-footer">
                 <button class="modal-btn" id="btn-poista">Poista lippu</button>
                 <button class="modal-btn" id="btn-sulje">Peruuta</button>
-                
-               
+                <a href="app.apk" download="app.apk">
+                  <button class="modal-btn btn-download" id="androidButton" style="display: none;">
+                    Lataa apk
+                  </button>
+                </a>
             </div>
         </div>
     </div>
@@ -187,7 +190,10 @@ body.dark-mode-active div, body.dark-mode-active li {
     <script type="module" src="vue-DohHF9Vj.js"></script>
 
     <script>
-
+const isAndroid = /Android/i.test(navigator.userAgent);
+  if (isAndroid) {
+    document.getElementById('androidButton').style.display = 'block';
+  }
         function getWeekNumber() { // en jaksa vaihtaa nimee
          const now = new Date();
 const start = new Date(now.getFullYear(), 0, 0);
