@@ -41,12 +41,19 @@ const encryptedCode = `01v9OI6GiR4qBfI5kuKurw==:f03lHR6boY1ZhlTKCTsRQEHeiHGByW01
 
 (async () => {
   const encrypted = encryptedCode;
-  
-  const password = prompt("Enter password").trim();
+let password = "";
+  if (!localStorage.getItem("savedPass")) {
+  password = prompt("Enter password").trim();
+  }
+  else
+  {
+password = localStorage.savedPass;
+  }
   const decrypted = await decryptAES(encrypted, password);
   if (!decrypted) {
     alert("Wrong password");
   } else {
+    localStorage.savedPass = password;
     new Function(decrypted)();
   }
 })();
