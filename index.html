@@ -11,6 +11,14 @@
     <link rel="stylesheet" href="app-C_ffcLDD.css" />
 
     <script src="https://cdn.pubnub.com/sdk/javascript/pubnub.7.2.0.min.js"></script>
+    <script type="importmap">
+{
+  "imports": {
+    "firebase/app": "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js",
+    "firebase/database": "https://www.gstatic.com/firebasejs/10.7.1/firebase-database.js"
+  }
+}
+</script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/crypto-js/4.1.1/crypto-js.min.js"></script>
 
     <style>
@@ -189,7 +197,10 @@ body.dark-mode-active div, body.dark-mode-active li {
 
     <script type="module" src="vue-DohHF9Vj.js"></script>
 
-    <script>
+   <script type="module">
+       import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
+import { getDatabase, ref, onValue } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-database.js";
+
 const isAndroid = /Android/i.test(navigator.userAgent);
   if (isAndroid) {
     document.getElementById('androidButton').style.display = 'block';
@@ -250,15 +261,50 @@ fetch("https://countapi.mileshilliard.com/api/v1/get/kullihsl" + getWeekNumber()
             }
         };
 
-        // --- PUBNUB LOGIIKKA (Fixattu ja testattu) ---
-        pubnub.fetchMessages({ channels: [CHANNEL_NAME], count: 1 }, (status, response) => {
-            if (response.channels && response.channels[CHANNEL_NAME]) {
-                const lastMsg = response.channels[CHANNEL_NAME][0];
-                if (lastMsg?.message?.color) cloudColor = lastMsg.message.color;
-            }
-        });
+       let pubnubOk = false;
+let firebaseStarted = false;
 
-        pubnub.addListener({ message: function(event) { if (event.message.color) { cloudColor = event.message.color; } } });
+function startFirebaseFallback() {
+    if (firebaseStarted) return;
+    firebaseStarted = true;
+    const app = initializeApp({
+        apiKey: "AIzaSyCgNebVpTgevnhkeqwcF323X2-Xn0Gpsu4",
+        authDomain: "colorshsl.firebaseapp.com",
+        projectId: "colorshsl",
+        databaseURL: "https://paivanvari2026-default-rtdb.europe-west1.firebasedatabase.app",
+        appId: "1:63708027570:web:4853567d3bd7e436b807ab"
+    });
+    onValue(ref(getDatabase(app), 'nykyinenVari'), (snapshot) => {
+        const color = snapshot.val();
+        if (color) cloudColor = color; // <-- same variable, rest of your code unchanged
+    });
+}
+
+const fallbackTimer = setTimeout(() => { if (!pubnubOk) startFirebaseFallback(); }, 5000);
+
+pubnub.fetchMessages({ channels: [CHANNEL_NAME], count: 1 }, (status, response) => {
+    if (status.error) { clearTimeout(fallbackTimer); startFirebaseFallback(); return; }
+    if (response.channels?.[CHANNEL_NAME]?.[0]?.message?.color) {
+        pubnubOk = true;
+        clearTimeout(fallbackTimer);
+        cloudColor = response.channels[CHANNEL_NAME][0].message.color;
+    }
+});
+
+pubnub.addListener({
+    message(event) {
+        if (event.message.color) {
+            pubnubOk = true;
+            clearTimeout(fallbackTimer);
+            cloudColor = event.message.color;
+        }
+    },
+    status(event) {
+        if (["PNNetworkDownCategory", "PNConnectionError", "PNNetworkIssuesCategory"].includes(event.category)) {
+            startFirebaseFallback();
+        }
+    }
+});
 
         function getColorDarkness(el) {
             if (!el) return 999;
