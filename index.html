@@ -201,13 +201,10 @@ body.dark-mode-active div, body.dark-mode-active li {
        import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
 import { getDatabase, ref, onValue } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-database.js";
 
-function isMedianApp() {
-  const ua = navigator.userAgent.toLowerCase();
-  return ua.includes("median") || ua.includes("wv") || ua.includes("android");
-}
+const params = new URLSearchParams(location.search);
        
 const isAndroid = /Android/i.test(navigator.userAgent);
-  if (isAndroid && !isMedianApp()) {
+  if (isAndroid && params.get("source") != "median_app") {
     document.getElementById('androidButton').style.display = 'block';
   }
         function getWeekNumber() { // en jaksa vaihtaa nimee
