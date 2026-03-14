@@ -278,7 +278,7 @@ function startFirebaseFallback() {
     });
     onValue(ref(getDatabase(app), 'nykyinenVari'), (snapshot) => {
         const color = snapshot.val();
-        if (color) cloudColor = color; // <-- same variable, rest of your code unchanged
+       if (color) cloudColor = color.slice(0, 7);
     });
 }
 
