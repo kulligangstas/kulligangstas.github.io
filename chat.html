@@ -6,7 +6,7 @@
   <title>Kulli Chat</title>
   <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500;600&family=Syne:wght@400;600;700&display=swap" rel="stylesheet"/>
   <style>
-    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
 
     :root {
       --bg:        #0d0f12;
@@ -32,6 +32,10 @@
       color: var(--text);
       font-family: var(--mono);
       overflow: hidden;
+      /* Prevent iOS bounce scroll and font size inflation */
+      -webkit-overflow-scrolling: touch;
+      -webkit-text-size-adjust: 100%;
+      text-size-adjust: 100%;
     }
 
     /* ─── Layout ─── */
@@ -39,6 +43,8 @@
       display: flex;
       flex-direction: column;
       height: 100vh;
+      /* Use dvh on supported browsers so the input bar sits above the mobile keyboard */
+      height: 100dvh;
       max-width: 760px;
       margin: 0 auto;
       border-left: 1px solid var(--border);
@@ -105,6 +111,9 @@
       flex-direction: column;
       gap: 4px;
       scroll-behavior: smooth;
+      /* Momentum scrolling on iOS */
+      -webkit-overflow-scrolling: touch;
+      overscroll-behavior: contain;
     }
     #chat::-webkit-scrollbar { width: 4px; }
     #chat::-webkit-scrollbar-track { background: transparent; }
@@ -200,6 +209,8 @@
       border-top: 1px solid var(--border);
       background: var(--surface);
       flex-shrink: 0;
+      /* Sit above the iOS home indicator */
+      padding-bottom: max(12px, env(safe-area-inset-bottom));
     }
     #msg-input {
       flex: 1;
@@ -230,6 +241,8 @@
       display: grid; place-items: center;
       flex-shrink: 0;
       transition: background 0.15s, transform 0.1s;
+      /* Prevent tap highlight flash on mobile */
+      -webkit-tap-highlight-color: transparent;
     }
     #send-btn:hover { background: #ffb820; }
     #send-btn:active { transform: scale(0.93); }
@@ -242,6 +255,9 @@
       display: flex; align-items: center; justify-content: center;
       z-index: 100;
       backdrop-filter: blur(4px);
+      /* Keep card clear of the keyboard */
+      align-items: flex-end;
+      padding-bottom: env(safe-area-inset-bottom);
     }
     #name-overlay.hidden { display: none; }
     .name-card {
@@ -267,7 +283,8 @@
       border-radius: 8px;
       color: var(--text);
       font-family: var(--mono);
-      font-size: 14px;
+      /* 16px prevents iOS auto-zoom on focus */
+      font-size: 16px;
       padding: 10px 14px;
       outline: none;
       transition: border-color 0.2s;
@@ -284,6 +301,9 @@
       padding: 11px;
       cursor: pointer;
       transition: background 0.15s;
+      -webkit-tap-highlight-color: transparent;
+      /* Large enough tap target */
+      min-height: 44px;
     }
     .name-card button:hover { background: #ffb820; }
 
@@ -302,6 +322,128 @@
     }
     #empty-state .big { font-size: 32px; margin-bottom: 4px; }
     #empty-state strong { color: var(--text); font-family: var(--sans); font-size: 15px; }
+
+
+    /* ═══════════════════════════════════════════
+       MOBILE — up to 480px (phone portrait)
+    ═══════════════════════════════════════════ */
+    @media (max-width: 480px) {
+      #app {
+        /* No side borders — use the full screen edge-to-edge */
+        border-left: none;
+        border-right: none;
+      }
+
+      header {
+        padding: 12px 14px;
+        /* Clear notch / dynamic island */
+        padding-top: max(12px, env(safe-area-inset-top));
+      }
+
+      .header-title { font-size: 14px; }
+      .header-sub   { font-size: 10px; }
+
+      /* Hide the week badge to save header space */
+      #week-badge { display: none; }
+
+      #chat {
+        padding: 14px 10px;
+      }
+
+      /* Wider bubbles on narrow screens */
+      .msg-row {
+        max-width: 86%;
+      }
+
+      .msg-bubble {
+        font-size: 13px;
+        padding: 8px 12px;
+      }
+
+      #typing-area {
+        padding: 0 14px 4px;
+      }
+
+      #input-bar {
+        padding: 10px 10px;
+        padding-bottom: max(10px, env(safe-area-inset-bottom));
+        gap: 8px;
+      }
+
+      #msg-input {
+        /* 16px prevents iOS auto-zoom on focus */
+        font-size: 16px;
+        padding: 9px 12px;
+        height: 40px;
+      }
+
+      #send-btn {
+        /* Apple HIG minimum tap target */
+        width: 44px;
+        height: 44px;
+      }
+
+      /* Name card fills the bottom sheet style on small screens */
+      #name-overlay {
+        align-items: flex-end;
+      }
+      .name-card {
+        width: 100%;
+        border-bottom-left-radius: 0;
+        border-bottom-right-radius: 0;
+        border-bottom: none;
+        padding: 28px 20px;
+        padding-bottom: max(28px, env(safe-area-inset-bottom));
+      }
+    }
+
+
+    /* ═══════════════════════════════════════════
+       TABLET — 481px–768px (landscape phones,
+       small tablets)
+    ═══════════════════════════════════════════ */
+    @media (min-width: 481px) and (max-width: 768px) {
+      #app {
+        border-left: none;
+        border-right: none;
+      }
+
+      .msg-row { max-width: 78%; }
+
+      header { padding: 14px 18px; }
+
+      #chat { padding: 16px 14px; }
+
+      #input-bar { padding: 12px 14px; }
+
+      /* Still bump font-size to avoid iOS zoom */
+      #msg-input  { font-size: 16px; }
+    }
+
+
+    /* ═══════════════════════════════════════════
+       LANDSCAPE PHONES — short viewport
+    ═══════════════════════════════════════════ */
+    @media (max-height: 500px) and (orientation: landscape) {
+      header {
+        padding-top: 8px;
+        padding-bottom: 8px;
+      }
+
+      /* Compact the logo in landscape */
+      .logo { width: 28px; height: 28px; font-size: 12px; }
+
+      #chat { padding: 8px 12px; }
+
+      .msg-row:not(.grouped) { margin-top: 6px; }
+
+      #typing-area { min-height: 16px; padding-bottom: 2px; }
+
+      #input-bar { padding: 8px 12px; }
+
+      #send-btn { width: 38px; height: 38px; }
+      #msg-input { height: 38px; }
+    }
   </style>
 </head>
 <body>
