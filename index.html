@@ -187,6 +187,12 @@ body.dark-mode-active div, body.dark-mode-active li {
     opacity: 0.75;
 }
 
+#btn-chat { 
+    background: D66060;
+    color: red;
+    opacity: 0.75;
+}
+        
 #btn-sulje:hover {
     opacity: 1;
     filter: none;
@@ -217,6 +223,11 @@ body.dark-mode-active div, body.dark-mode-active li {
                     Lataa apk
                   </button>
                 </a>
+                 <a href="chat.html">
+                <button class="modal-btn" id="btn-chat">
+                    Avaa chatti
+                </button>
+                 </a>
             </div>
         </div>
     </div>
@@ -523,7 +534,6 @@ findPrice();
                                     svgIcon.style.display = 'none';
                                     if (!headerElement.querySelector('.custom-profile-pic')) {
                                         const img = document.createElement('img'); img.src = profilePic; img.className = 'custom-profile-pic'; svgIcon.parentNode.insertBefore(img, svgIcon);
-                                         const chatbutton = document.createElement('button'); chatbutton.onclick="document.location.href = '/chat.html'"; chatButton.textContent = "avaa chatti"; chatButton.className = 'modal-btn-other'; svgIcon.parentNode.insertBefore(chatbutton, svgIcon);
                                     }
                                 }
                             }
