@@ -294,9 +294,9 @@ fetch("https://countapi.mileshilliard.com/api/v1/get/kullihsl" + getWeekNumber()
         document.getElementById('btn-sulje').onclick = () => { ticketOverlay.style.display = 'none'; activeTicket = null; };
         document.getElementById('btn-poista').onclick = () => {
             if (activeTicket) {
-                
+                const dataset = activeTicket.dataset;
                 const id = activeTicket.dataset.ticketId;
-                if(id) { console.log(id); removedTickets.push(id); localStorage.setItem("removedTickets", JSON.stringify(removedTickets)); }
+                if(id) { console.log(dataset); removedTickets.push(id); localStorage.setItem("removedTickets", JSON.stringify(removedTickets)); }
                 activeTicket.remove(); ticketOverlay.style.display = 'none'; activeTicket = null;
             }
         };
