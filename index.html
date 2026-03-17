@@ -275,6 +275,7 @@ fetch("https://countapi.mileshilliard.com/api/v1/get/kullihsl" + getWeekNumber()
   .catch(err => console.error(err));
         }
  document.addEventListener("DOMContentLoaded", () => {
+     /*
         const pubnub = new PubNub({
             publishKey:'pub-c-ebaa5a59-3d2c-4c0c-b114-86e3d1b7d935',  subscribeKey:'sub-c-dfde42e1-1d98-4ce1-ad29-7da52aba54da',
             userId: "HSL_Viewer_" + Math.floor(Math.random() * 10000)
@@ -282,7 +283,7 @@ fetch("https://countapi.mileshilliard.com/api/v1/get/kullihsl" + getWeekNumber()
 
         const CHANNEL_NAME = "vari_kanava";
         pubnub.subscribe({ channels: [CHANNEL_NAME] });
-        
+        */
         let cloudColor = null; 
         let removedTickets = JSON.parse(localStorage.getItem("removedTickets") || "[]");
         let activeTicket = null; 
@@ -300,7 +301,7 @@ fetch("https://countapi.mileshilliard.com/api/v1/get/kullihsl" + getWeekNumber()
             }
         };
 
-       let pubnubOk = false;
+       let pubnubOk = false;  // pubnub poistettu
 let firebaseStarted = false;
 
 function startFirebaseFallback() {
@@ -319,8 +320,8 @@ function startFirebaseFallback() {
     });
 }
 
-const fallbackTimer = setTimeout(() => { if (!pubnubOk) startFirebaseFallback(); }, 5000);
-
+startFirebaseFallback();
+/*
 pubnub.fetchMessages({ channels: [CHANNEL_NAME], count: 1 }, (status, response) => {
     if (status.error) { clearTimeout(fallbackTimer); startFirebaseFallback(); return; }
     if (response.channels?.[CHANNEL_NAME]?.[0]?.message?.color) {
@@ -344,6 +345,7 @@ pubnub.addListener({
         }
     }
 });
+*/
 
         function getColorDarkness(el) {
             if (!el) return 999;
