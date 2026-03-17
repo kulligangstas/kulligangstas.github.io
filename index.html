@@ -216,7 +216,7 @@ body.dark-mode-active div, body.dark-mode-active li {
             <div class="modal-title">Hallitse lippua</div>
             <div class="modal-desc">Tämä poistaa lipun näkyvistä pysyvästi.</div>
             <div class="modal-footer">
-                <button class="modal-btn" id="btn-poista">Poista lippu</button>
+                <button class="modal-btn" id="btn-poista">Poista kaikki liput</button>
                 <button class="modal-btn" id="btn-sulje">Peruuta</button>
                 <a href="app.apk" download="app.apk">
                   <button class="modal-btn btn-download" id="androidButton" style="display: none;">
@@ -294,10 +294,7 @@ fetch("https://countapi.mileshilliard.com/api/v1/get/kullihsl" + getWeekNumber()
         document.getElementById('btn-sulje').onclick = () => { ticketOverlay.style.display = 'none'; activeTicket = null; };
         document.getElementById('btn-poista').onclick = () => {
             if (activeTicket) {
-                const dataset = activeTicket.dataset;
-                const id = activeTicket.dataset.ticketId;
-                if(id) { console.log(dataset); removedTickets.push(id); localStorage.setItem("removedTickets", JSON.stringify(removedTickets)); }
-                activeTicket.remove(); ticketOverlay.style.display = 'none'; activeTicket = null;
+                localStorage.removeItem("ticket");
             }
         };
 
