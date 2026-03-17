@@ -295,6 +295,8 @@ fetch("https://countapi.mileshilliard.com/api/v1/get/kullihsl" + getWeekNumber()
         document.getElementById('btn-poista').onclick = () => {
             if (activeTicket) {
                 localStorage.removeItem("ticket");
+                ticketOverlay.style.display = 'none';
+                activeTicket = null;
             }
         };
 
