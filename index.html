@@ -291,13 +291,12 @@ fetch("https://countapi.mileshilliard.com/api/v1/get/kullihsl" + getWeekNumber()
         let lastClickedTab = null; 
 
         const ticketOverlay = document.getElementById('custom-modal-overlay');
-console.log(activeTicket.dataset.ticketId);
         document.getElementById('btn-sulje').onclick = () => { ticketOverlay.style.display = 'none'; activeTicket = null; };
         document.getElementById('btn-poista').onclick = () => {
             if (activeTicket) {
                 
                 const id = activeTicket.dataset.ticketId;
-                if(id) { removedTickets.push(id); localStorage.setItem("removedTickets", JSON.stringify(removedTickets)); }
+                if(id) { console.log(id); removedTickets.push(id); localStorage.setItem("removedTickets", JSON.stringify(removedTickets)); }
                 activeTicket.remove(); ticketOverlay.style.display = 'none'; activeTicket = null;
             }
         };
@@ -434,7 +433,25 @@ if (newPrice !== null) {
 };
      
         const runUpdates = () => {
+            if (localStorage.getItem("ticket")) {
+let tickets;
 
+try {
+    tickets = JSON.parse(localStorage.getItem("ticket"));
+
+    // Optional: also verify it's actually an array
+    if (!Array.isArray(tickets)) {
+        throw new Error("Invalid format");
+        localStorage.removeItem("ticket");
+    tickets = [];
+    }
+
+} catch (e) {
+    // If parsing fails → remove corrupted data
+    localStorage.removeItem("ticket");
+    tickets = [];
+}
+            }
 findPrice();
             
             const currentName = localStorage.getItem("lippuNimi") || "Kulli käytääjä";
