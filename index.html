@@ -297,6 +297,7 @@ fetch("https://countapi.mileshilliard.com/api/v1/get/kullihsl" + getWeekNumber()
                 localStorage.removeItem("ticket");
                 ticketOverlay.style.display = 'none';
                 activeTicket = null;
+                location.reload();
             }
         };
 
