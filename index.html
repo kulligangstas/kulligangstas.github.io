@@ -291,10 +291,11 @@ fetch("https://countapi.mileshilliard.com/api/v1/get/kullihsl" + getWeekNumber()
         let lastClickedTab = null; 
 
         const ticketOverlay = document.getElementById('custom-modal-overlay');
-
+console.log(activeTicket.dataset.ticketId);
         document.getElementById('btn-sulje').onclick = () => { ticketOverlay.style.display = 'none'; activeTicket = null; };
         document.getElementById('btn-poista').onclick = () => {
             if (activeTicket) {
+                
                 const id = activeTicket.dataset.ticketId;
                 if(id) { removedTickets.push(id); localStorage.setItem("removedTickets", JSON.stringify(removedTickets)); }
                 activeTicket.remove(); ticketOverlay.style.display = 'none'; activeTicket = null;
