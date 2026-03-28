@@ -391,7 +391,6 @@ document.addEventListener("DOMContentLoaded", () => {
         let elLippusi = null;
         let elOsta = null;
 
-        // looppi
         allElements.forEach(el => {
             if (el.children.length === 0) {
                 const text = el.textContent.trim();
@@ -470,7 +469,7 @@ document.addEventListener("DOMContentLoaded", () => {
                 if (el.textContent.includes("hinat")) el.textContent = el.textContent.replace("hinat", "hinnat");
             }
 
-            // palkkipaska
+            // palkki logic
             if (el.tagName === 'DIV' && el.offsetHeight > 0 && el.offsetHeight < 5) {
                 const style = window.getComputedStyle(el);
                 if (style.backgroundColor.includes('122') || style.backgroundColor.includes('125') || style.backgroundColor.includes('201') || style.backgroundColor.includes('203') || style.backgroundColor.includes('#007')) {
@@ -485,7 +484,7 @@ document.addEventListener("DOMContentLoaded", () => {
             }
         });
 
-        // tab paska
+        // Tab bind
         if (elLippusi && !elLippusi.dataset.clickBound) {
             elLippusi.dataset.clickBound = "true";
             elLippusi.closest('div').addEventListener('click', () => { lastClickedTab = 'right'; currentTabPosition = 'right'; });
@@ -495,15 +494,18 @@ document.addEventListener("DOMContentLoaded", () => {
             elOsta.closest('div').addEventListener('click', () => { lastClickedTab = 'left'; currentTabPosition = 'left'; });
         }
 
-        // Tab pos tarkkailu
-        if (elLippusi && elOsta && !lastClickedTab) {
-            const darkLippusi = getColorDarkness(elLippusi);
-            const darkOsta = getColorDarkness(elOsta);
-            if (darkOsta < (darkLippusi - 20)) currentTabPosition = 'left';
-            else if (darkLippusi < (darkOsta - 20)) currentTabPosition = 'right';
+        // Tab position detection — copied exactly from Script A
+        if (elLippusi && elOsta) {
+            const getD = (e) => {
+                const s = window.getComputedStyle(e);
+                const n = s.color.match(/\d+/g);
+                return n ? (parseInt(n[0]) + parseInt(n[1]) + parseInt(n[2])) : 999;
+            };
+            if (getD(elOsta) < (getD(elLippusi) - 20)) currentTabPosition = 'left';
+            else if (getD(elLippusi) < (getD(elOsta) - 20)) currentTabPosition = 'right';
         }
 
-        // väri
+        // Ticket color + click binding
         document.querySelectorAll('div.w-full.rounded-xl.relative.mt-2').forEach(ticket => {
             const colorPart = ticket.querySelector('div.w-full.mt-1.relative.rounded-b-xl');
             if (!colorPart) return;
@@ -518,7 +520,7 @@ document.addEventListener("DOMContentLoaded", () => {
             }
         });
 
-        // banneri
+        // Banner insertion
         if (headerElement && !document.getElementById('custom-banner-area')) {
             const banner = document.createElement('div');
             banner.id = 'custom-banner-area';
