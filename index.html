@@ -559,6 +559,9 @@ findPrice();
                             }
                         }
                     }
+                     // Fix typo after adding hätäyhteystiedot
+                    if (el.textContent.includes("hinat"))  el.textContent = el.textContent.replace("hinat", "hinnat"); 
+                }
 // palkkipaska
                 if (el.tagName === 'DIV' && el.offsetHeight > 0 && el.offsetHeight < 5) {
                     const style = window.getComputedStyle(el);
@@ -571,12 +574,6 @@ findPrice();
                         el.style.setProperty('left', (currentTabPosition === 'left' ? '25%' : '75%'), 'important');
                         el.style.setProperty('transform', 'translateX(-50%) translateY(2px)', 'important');
                     }
-                }
-            });
-                    
-                    // Fix typo after adding hätäyhteystiedot
-                    if (el.textContent.includes("hinat")) { el.textContent = el.textContent.replace("hinat", "hinnat"); }
-        }
                 }
             });
 
