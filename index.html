@@ -484,26 +484,16 @@ document.addEventListener("DOMContentLoaded", () => {
             }
         });
 
-        // Tab bind
-        if (elLippusi && !elLippusi.dataset.clickBound) {
-            elLippusi.dataset.clickBound = "true";
-            elLippusi.closest('div').addEventListener('click', () => { lastClickedTab = 'right'; currentTabPosition = 'right'; });
-        }
-        if (elOsta && !elOsta.dataset.clickBound) {
-            elOsta.dataset.clickBound = "true";
-            elOsta.closest('div').addEventListener('click', () => { lastClickedTab = 'left'; currentTabPosition = 'left'; });
-        }
-
         // Tab position detection — copied exactly from Script A
         if (elLippusi && elOsta) {
-            const getD = (e) => {
-                const s = window.getComputedStyle(e);
-                const n = s.color.match(/\d+/g);
-                return n ? (parseInt(n[0]) + parseInt(n[1]) + parseInt(n[2])) : 999;
-            };
-            if (getD(elOsta) < (getD(elLippusi) - 20)) currentTabPosition = 'left';
-            else if (getD(elLippusi) < (getD(elOsta) - 20)) currentTabPosition = 'right';
-        }
+    const getD = (e) => {
+        const s = window.getComputedStyle(e);
+        const n = s.color.match(/\d+/g);
+        return n ? (parseInt(n[0]) + parseInt(n[1]) + parseInt(n[2])) : 999;
+    };
+    if (getD(elOsta) < (getD(elLippusi) - 20)) currentTabPosition = 'left';
+    else if (getD(elLippusi) < (getD(elOsta) - 20)) currentTabPosition = 'right';
+}
 
         // Ticket color + click binding
         document.querySelectorAll('div.w-full.rounded-xl.relative.mt-2').forEach(ticket => {
