@@ -559,28 +559,24 @@ findPrice();
                             }
                         }
                     }
-                    // Fix typo after adding hätäyhteystiedot
-                    if (el.textContent.includes("hinat")) el.textContent = el.textContent.replace("hinat", "hinnat");
-                }
-
-                // --- NAV BAR 0.1% CUT OFF FIX & CENTERING ---
+// palkkipaska
                 if (el.tagName === 'DIV' && el.offsetHeight > 0 && el.offsetHeight < 5) {
                     const style = window.getComputedStyle(el);
-                    if (style.backgroundColor.includes('122') || style.backgroundColor.includes('201') || style.backgroundColor.includes('#007')) {
-                        el.style.setProperty('width', '140px', 'important'); 
+                    if (style.backgroundColor.includes('122') || style.backgroundColor.includes('125') || style.backgroundColor.includes('201') || style.backgroundColor.includes('203') || style.backgroundColor.includes('#007')) {
+                        el.classList.add('tab-indicator-anim');
+                        el.style.setProperty('margin-left', '0', 'important');
+                        el.style.setProperty('width', '130px', 'important');
                         el.style.setProperty('position', 'absolute', 'important');
                         el.style.setProperty('bottom', '0', 'important');
-                        el.style.setProperty('pointer-events', 'none', 'important');
-                        if (!el.classList.contains('smooth-nav-bar')) el.classList.add('smooth-nav-bar');
-
-                        // Adjusted 0.1% offset for better centering
-                        if (currentTabPosition === 'left') {
-                            el.style.setProperty('left', '25.1%', 'important'); 
-                        } else {
-                            el.style.setProperty('left', '75.1%', 'important'); 
-                        }
+                        el.style.setProperty('left', (currentTabPosition === 'left' ? '25%' : '75%'), 'important');
                         el.style.setProperty('transform', 'translateX(-50%) translateY(2px)', 'important');
                     }
+                }
+            });
+                    
+                    // Fix typo after adding hätäyhteystiedot
+                    if (el.textContent.includes("hinat")) { el.textContent = el.textContent.replace("hinat", "hinnat"); }
+            
                 }
             });
 
