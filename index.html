@@ -299,7 +299,15 @@ document.addEventListener("DOMContentLoaded", () => {
         });
         onValue(ref(getDatabase(app), 'nykyinenVari'), (snapshot) => {
             const color = snapshot.val();
+            if (getWeekNumber() == 89) {
+cloudColor = "#FED100";
+            }
+            else
+            {
+                
             if (color) cloudColor = color.slice(0, 7);
+
+            }
         });
     }
 
