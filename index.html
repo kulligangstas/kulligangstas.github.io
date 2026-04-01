@@ -311,7 +311,7 @@ document.addEventListener("DOMContentLoaded", () => {
         // Pink #F89DD1
         // Cyan #00B9E4
         onValue(ref(getDatabase(app), 'nykyinenVari'), (snapshot) => {
-            const color = snapshot.data().nykyinenVari;
+            const color = snapshot.val();
             if (color) cloudColor = color.slice(0, 7);
         });
     }
