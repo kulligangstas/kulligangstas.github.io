@@ -290,13 +290,17 @@ document.addEventListener("DOMContentLoaded", () => {
     function startFirebaseFallback() {
         if (firebaseStarted) return;
         firebaseStarted = true;
-        const app = initializeApp({
-            apiKey: "AIzaSyCgNebVpTgevnhkeqwcF323X2-Xn0Gpsu4",
-            authDomain: "colorshsl.firebaseapp.com",
-            projectId: "colorshsl",
-            databaseURL: "https://paivanvari2026-default-rtdb.europe-west1.firebasedatabase.app",
-            appId: "1:63708027570:web:4853567d3bd7e436b807ab"
-        });
+        const firebaseConfig = {
+  apiKey: "AIzaSyA3P-CNmKEx8dEIGo1p49vL9Jk0aOhir2k",
+  authDomain: "paivanvari-51e79.firebaseapp.com",
+  databaseURL: "https://paivanvari-51e79-default-rtdb.europe-west1.firebasedatabase.app",
+  projectId: "paivanvari-51e79",
+  storageBucket: "paivanvari-51e79.firebasestorage.app",
+  messagingSenderId: "999730196442",
+  appId: "1:999730196442:web:0a29bac8bdffe527e79ae3",
+  measurementId: "G-7XK6YLXPWJ"
+};
+        const app = initializeApp(firebaseConfig);
         // lime #64BE1E
         // green #00985F
         // Yellow #FED100
@@ -307,16 +311,8 @@ document.addEventListener("DOMContentLoaded", () => {
         // Pink #F89DD1
         // Cyan #00B9E4
         onValue(ref(getDatabase(app), 'nykyinenVari'), (snapshot) => {
-            const color = snapshot.val();
-            if (getWeekNumber() == 91) {
-cloudColor = "#00985F";
-            }
-            else
-            {
-                
+            const color = snapshot.data().nykyinenVari;
             if (color) cloudColor = color.slice(0, 7);
-
-            }
         });
     }
 
