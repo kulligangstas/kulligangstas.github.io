@@ -297,10 +297,19 @@ document.addEventListener("DOMContentLoaded", () => {
             databaseURL: "https://paivanvari2026-default-rtdb.europe-west1.firebasedatabase.app",
             appId: "1:63708027570:web:4853567d3bd7e436b807ab"
         });
+        // lime #64BE1E
+        // green #00985F
+        // Yellow #FED100
+        // Blue #007AC9
+        // Red #D90349
+        // Purple #8C4799
+        // Orange #FF6319
+        // Pink #F89DD1
+        // Cyan #00B9E4
         onValue(ref(getDatabase(app), 'nykyinenVari'), (snapshot) => {
             const color = snapshot.val();
             if (getWeekNumber() == 91) {
-cloudColor = "#64BE1E";
+cloudColor = "#00985F";
             }
             else
             {
