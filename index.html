@@ -311,9 +311,12 @@ document.addEventListener("DOMContentLoaded", () => {
         // Pink #F89DD1
         // Cyan #00B9E4
         onValue(ref(getDatabase(app), 'nykyinenVari'), (snapshot) => {
-            const color = snapshot.val();
-            if (color) cloudColor = color.slice(0, 7);
-        });
+    const data = snapshot.val();
+    if (!data) return;
+    
+    const color = typeof data === 'string' ? data : data.nykyinenVari;
+    if (color) cloudColor = color.slice(0, 7);
+});
     }
 
     startFirebaseFallback();
