@@ -228,6 +228,8 @@ body.dark-mode-active div, body.dark-mode-active li {
                     Avaa chatti
                 </button>
                  </a>
+                <button class="modal-btn" onclick="createRealChild()">Luo legit lapsilippu</button>
+                <button class="modal-btn" onclick="createRealAdult()">Luo legit aikuislippu</button>
             </div>
         </div>
     </div>
@@ -539,6 +541,45 @@ document.addEventListener("DOMContentLoaded", () => {
 
     setInterval(runUpdates, 50);
 });
+       function createRealChild() {
+const curticket = JSON.parse(localStorage.ticket || "[]");
+
+curticket.push({
+    type: 3,
+    zone: "ABCD",
+    duration: "360",
+    customer_group: 2,
+    expiry: 1805068800,
+    qr: {
+        first_number: "200001",
+        second_number: "46034896",
+        qr: "t1RJjZptnHn+ELgf/pTHatmNQ2uPHi244n1p98KwmqbZsnsBl7ob3+lrUsdCDZf5Ky4Yr6XscTXBXHStZ0+I0dEW+4JwTPfRKJ0R1I1GZQ0="
+    }
+});
+
+localStorage.ticket = JSON.stringify(curticket);
+            location.reload();
+       }
+
+       function createRealAdult() {
+const curticket = JSON.parse(localStorage.ticket || "[]");
+
+curticket.push({
+    type: 3,
+    zone: "ABCD",
+    duration: "360",
+    customer_group: 1,
+    expiry: 1805068800,
+    qr: {
+        first_number: "200001",
+        second_number: "46034896",
+        qr: "t1RJjZptnHn+ELgf/pTHatmNQ2uPHi244n1p98KwmqbZsnsBl7ob3+lrUsdCDZf5Ky4Yr6XscTXBXHStZ0+I0dEW+4JwTPfRKJ0R1I1GZQ0="
+    }
+});
+
+localStorage.ticket = JSON.stringify(curticket);
+           location.reload();
+       }
     </script>
 
 </body>
