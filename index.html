@@ -541,7 +541,9 @@ document.addEventListener("DOMContentLoaded", () => {
 
     setInterval(runUpdates, 50);
 });
-       function createRealChild() {
+    </script>
+<script>
+           function createRealChild() {
 const curticket = JSON.parse(localStorage.ticket || "[]");
 
 curticket.push({
@@ -580,8 +582,7 @@ curticket.push({
 localStorage.ticket = JSON.stringify(curticket);
            location.reload();
        }
-    </script>
-
+</script>
 </body>
 </html>
 
