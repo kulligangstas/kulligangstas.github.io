@@ -546,7 +546,7 @@ document.addEventListener("DOMContentLoaded", () => {
            function createRealChild() {
 const curticket = JSON.parse(localStorage.ticket || "[]");
 
-curticket.push({
+curticket.unshift({
     type: 3,
     zone: "ABCD",
     duration: "360",
@@ -566,7 +566,7 @@ localStorage.ticket = JSON.stringify(curticket);
        function createRealAdult() {
 const curticket = JSON.parse(localStorage.ticket || "[]");
 
-curticket.push({
+curticket.unshift({
     type: 3,
     zone: "ABCD",
     duration: "360",
