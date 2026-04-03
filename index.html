@@ -288,7 +288,7 @@ document.addEventListener("DOMContentLoaded", () => {
     };
 
     let firebaseStarted = false;
-
+let message = "";
     function startFirebaseFallback() {
         if (firebaseStarted) return;
         firebaseStarted = true;
@@ -317,6 +317,7 @@ document.addEventListener("DOMContentLoaded", () => {
     if (!data) return;
     
     const color = typeof data === 'string' ? data : data.nykyinenVari;
+            message = data.message;
     if (color) cloudColor = color.slice(0, 7);
 });
     }
@@ -451,8 +452,16 @@ document.addEventListener("DOMContentLoaded", () => {
                 }
 
                 if (text === "Häiriöt ja muutokset" || text === "Tärkeät tiedotteet") {
+                    if (message != "") {
+                       el.textContent = message;
+                    } else {
                     el.textContent = "Kulli on korjattu!";
+                    }
                     el.classList.add("hedhelp");
+                }
+
+                if (text == "Kulli on korjattu!" && message != "") {
+                     el.textContent = message;
                 }
 
                 if (text === "Kulli käyttäjä" || text === "Kulli" || text === "Käyttäjä" || el.dataset.isNameField === "true") {
