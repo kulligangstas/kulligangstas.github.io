@@ -300,21 +300,28 @@ let toastTimer = null;
 document.getElementById("authInput").addEventListener("keydown", e => { if(e.key==="Enter") tryAuth(); });
 
 async function tryAuth() {
-  const pw = document.getElementById("authInput").value;
+  const pw  = document.getElementById("authInput").value;
   const err = document.getElementById("authErr");
-  if(!pw){ err.textContent="Enter password"; return; }
-  document.getElementById("authBtn").textContent="Checking…";
-  // Verify by calling a protected endpoint
+  if (!pw) { err.textContent = "Enter password"; return; }
+  document.getElementById("authBtn").textContent = "Checking…";
   try {
-    const r = await fetch(API+"/api/GetKey", { headers:{"X-Admin-Password":pw} });
-    if(r.status===401){ err.textContent="Wrong password"; document.getElementById("authInput").classList.add("err"); document.getElementById("authBtn").textContent="Unlock admin panel"; return; }
+    // Use GetUsedKeys instead of GetKey — works even when pool is empty
+    const r = await fetch(API + "/api/GetUsedKeys", {
+      headers: { "X-Admin-Password": pw }
+    });
+    if (r.status === 401) {
+      err.textContent = "Wrong password";
+      document.getElementById("authInput").classList.add("err");
+      document.getElementById("authBtn").textContent = "Unlock admin panel";
+      return;
+    }
     adminPass = pw;
-    document.getElementById("auth-gate").style.display="none";
-    document.getElementById("app").style.display="block";
+    document.getElementById("auth-gate").style.display = "none";
+    document.getElementById("app").style.display = "block";
     loadStats();
-  } catch(e){
-    err.textContent="Network error — check API";
-    document.getElementById("authBtn").textContent="Unlock admin panel";
+  } catch (e) {
+    err.textContent = "Network error — check API";
+    document.getElementById("authBtn").textContent = "Unlock admin panel";
   }
 }
 
@@ -353,14 +360,16 @@ async function apiGet(path) {
 
 async function loadStats() {
   try {
-    // Get used keys count
-    const usedData = await apiGet("/api/GetUsedKeys");
-    const usedCount = usedData.keys.length;
-    // Try to get an unused key to infer total (limited approach — we can sum from index)
-    // We don't have a direct "total" endpoint, so we probe GetUsedKeys and show what we have
+    const used = await apiGet("/api/GetUsedKeys");
+    const usedCount = used.keys.length;
     document.getElementById("stat-used").textContent = usedCount;
+
+    // Get a free key just to confirm pool has entries (don't expose it)
+    // Instead, generate a temp check — or just show used + note
+    // Best we can do without a /api/Stats endpoint:
     document.getElementById("stat-total").textContent = "—";
-    document.getElementById("stat-free").textContent = "—";
+    document.getElementById("stat-free").textContent  = "—";
+    document.getElementById("stat-used").textContent  = usedCount;
   } catch { /* silent */ }
 }
 
