@@ -1,0 +1,851 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1" />
+<title>RideVault</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+:root {
+  --bg-0: #07090c;
+  --bg-1: #0c1117;
+  --bg-2: #131a22;
+  --line: rgba(255,255,255,0.08);
+  --line-strong: rgba(255,255,255,0.16);
+  --fg: #e7ecf3;
+  --fg-dim: #8a95a5;
+  --fg-mute: #5a6470;
+  --accent: #b6ff3c;
+  --accent-soft: rgba(182,255,60,0.12);
+  --accent-glow: rgba(182,255,60,0.45);
+  --danger: #ff6a6a;
+  --yellow: #ffb547;
+}
+* { box-sizing: border-box; margin: 0; padding: 0; -webkit-tap-highlight-color: transparent; }
+html, body { height: 100%; }
+body {
+  font-family: "Space Grotesk", system-ui, sans-serif;
+  background: var(--bg-0); color: var(--fg);
+  -webkit-font-smoothing: antialiased; min-height: 100dvh;
+}
+
+/* Sections */
+.section { display: none; }
+.section.visible { display: block; }
+#sec-login { height: 100dvh; overflow: hidden; }
+#sec-connect, #sec-controls {
+  min-height: 100dvh; display: none; flex-direction: column;
+  align-items: center; justify-content: center; padding: 2rem 1.25rem 3rem;
+}
+#sec-connect.visible, #sec-controls.visible { display: flex; }
+
+/* Loading overlay */
+#loading-overlay {
+  position: fixed; inset: 0; z-index: 999;
+  background: var(--bg-0);
+  display: flex; align-items: center; justify-content: center;
+  flex-direction: column; gap: 16px;
+  transition: opacity .4s;
+}
+#loading-overlay.fade { opacity: 0; pointer-events: none; }
+.loading-brand { font-weight: 700; font-size: 28px; letter-spacing: -0.03em; }
+.loading-brand span { color: var(--accent); }
+.loading-spinner {
+  width: 28px; height: 28px;
+  border: 2px solid var(--line-strong); border-top-color: var(--accent);
+  border-radius: 50%; animation: spin .75s linear infinite;
+}
+@keyframes spin { to { transform: rotate(360deg); } }
+
+/* Background */
+.bg {
+  position: fixed; inset: 0; z-index: 0; overflow: hidden;
+  background:
+    radial-gradient(1200px 800px at 75% 20%, rgba(182,255,60,0.08), transparent 60%),
+    radial-gradient(900px 700px at 20% 90%, rgba(60,140,255,0.06), transparent 60%),
+    linear-gradient(180deg, #06080b 0%, #0a0e13 60%, #060809 100%);
+}
+.bg-grid {
+  position: absolute; inset: -2px;
+  background-image: linear-gradient(var(--line) 1px, transparent 1px),
+    linear-gradient(90deg, var(--line) 1px, transparent 1px);
+  background-size: 56px 56px;
+  mask-image: radial-gradient(ellipse 80% 70% at 50% 50%, #000 40%, transparent 100%);
+  opacity: 0.55;
+}
+.bg-scan {
+  position: absolute; inset: 0;
+  background: repeating-linear-gradient(to bottom, rgba(255,255,255,0.014) 0 2px, transparent 2px 4px);
+  pointer-events: none;
+}
+.orb {
+  position: absolute; width: 520px; height: 520px;
+  left: -160px; top: -160px; border-radius: 50%;
+  background: radial-gradient(circle at 50% 50%, rgba(182,255,60,0.18), transparent 60%);
+  filter: blur(20px); animation: drift 18s ease-in-out infinite alternate;
+}
+@keyframes drift { 0% { transform: translate(0,0) scale(1); } 100% { transform: translate(80px,60px) scale(1.1); } }
+.scooter-wrap {
+  position: absolute; right: -120px; bottom: -60px;
+  width: 1100px; height: 620px; pointer-events: none;
+  filter: drop-shadow(0 30px 80px rgba(182,255,60,0.08)); opacity: 0.85;
+}
+.scooter-wrap svg { width: 100%; height: 100%; display: block; }
+
+/* Topbar */
+.topbar {
+  position: fixed; top: 0; left: 0; right: 0; z-index: 5;
+  display: flex; align-items: center; justify-content: space-between;
+  padding: 22px 32px; pointer-events: none;
+}
+.topbar > * { pointer-events: auto; }
+.brand { display: flex; align-items: center; gap: 10px; font-weight: 600; font-size: 16px; }
+.brand-mark {
+  width: 24px; height: 24px; display: grid; place-items: center;
+  border-radius: 6px; background: var(--accent); color: #07090c;
+  font-weight: 700; font-size: 13px; box-shadow: 0 0 24px var(--accent-glow);
+}
+.brand-name b { color: var(--accent); font-weight: 600; }
+.top-right {
+  display: flex; align-items: center; gap: 16px; color: var(--fg-mute);
+  font-size: 12px; font-family: "JetBrains Mono", monospace;
+  letter-spacing: 0.04em; text-transform: uppercase;
+}
+.status-dot {
+  width: 8px; height: 8px; border-radius: 50%;
+  background: var(--accent); box-shadow: 0 0 12px var(--accent-glow);
+  display: inline-block; margin-right: 6px; animation: pulse 2.4s ease-in-out infinite;
+}
+@keyframes pulse { 0%,100% { opacity:1; } 50% { opacity:0.4; } }
+
+/* Status pill */
+.status-pill {
+  position: fixed; right: 24px; bottom: 24px; z-index: 4;
+  display: inline-flex; align-items: center; gap: 10px;
+  padding: 9px 14px 9px 12px;
+  background: rgba(8,12,16,0.7); border: 1px solid var(--line-strong); border-radius: 99px;
+  color: var(--fg); font: 500 12px/1 "Space Grotesk", sans-serif;
+  backdrop-filter: blur(12px); cursor: pointer; transition: border-color .2s;
+}
+.status-pill:hover { border-color: var(--accent); }
+.status-pill-dot {
+  width: 8px; height: 8px; border-radius: 50%;
+  background: var(--accent); box-shadow: 0 0 10px var(--accent-glow); position: relative;
+}
+.status-pill-dot::after {
+  content: ""; position: absolute; inset: -4px;
+  border-radius: 50%; border: 1px solid var(--accent);
+  opacity: 0.5; animation: ping 2.2s ease-out infinite;
+}
+@keyframes ping { 0% { transform: scale(0.6); opacity: 0.6; } 100% { transform: scale(1.6); opacity: 0; } }
+.status-pill-meta {
+  color: var(--fg-mute); font-family: "JetBrains Mono", monospace;
+  font-size: 10.5px; letter-spacing: 0.04em;
+  padding-left: 10px; border-left: 1px solid var(--line);
+}
+
+/* Battery pill */
+.bat-pill {
+  position: fixed; right: 24px; bottom: 24px; z-index: 4;
+  display: none; align-items: center; gap: 8px; padding: 8px 14px 8px 11px;
+  background: rgba(8,12,16,0.82); border: 1px solid var(--line-strong); border-radius: 99px;
+  color: var(--fg); font: 600 13px/1 "Space Grotesk", sans-serif;
+  backdrop-filter: blur(12px); transition: border-color .3s;
+}
+.bat-pill.visible { display: inline-flex; }
+.bat-pill-pct { font-family: "JetBrains Mono", monospace; font-size: 13px; letter-spacing: 0.03em; }
+
+/* Login */
+.stage {
+  position: relative; z-index: 2; height: 100vh;
+  display: grid; place-items: center; padding: 80px 24px;
+}
+.hero {
+  position: relative; width: min(440px, 100%);
+  display: flex; flex-direction: column; align-items: center;
+}
+.wordmark {
+  font-weight: 700; font-size: clamp(56px, 9vw, 96px);
+  line-height: 0.95; letter-spacing: -0.04em; text-align: center; margin: 0 0 6px;
+  background: linear-gradient(180deg, #fff 0%, #c8d0dc 100%);
+  -webkit-background-clip: text; background-clip: text; color: transparent;
+}
+.wordmark .v { color: var(--accent); -webkit-text-fill-color: var(--accent); text-shadow: 0 0 30px var(--accent-glow); }
+.tagline {
+  font-family: "JetBrains Mono", monospace; font-size: 11px; letter-spacing: 0.32em;
+  color: var(--fg-mute); text-transform: uppercase; margin: 0 0 38px;
+  display: flex; align-items: center; gap: 10px;
+}
+.tagline::before, .tagline::after {
+  content: ""; height: 1px; flex: 1;
+  background: linear-gradient(90deg, transparent, var(--line-strong), transparent); min-width: 32px;
+}
+
+.card-login {
+  width: 100%;
+  background: linear-gradient(180deg, rgba(20,26,34,0.78), rgba(12,17,23,0.78));
+  border: 1px solid var(--line); border-radius: 18px;
+  backdrop-filter: blur(14px);
+  box-shadow: 0 1px 0 rgba(255,255,255,0.04) inset, 0 30px 80px rgba(0,0,0,0.55);
+  overflow: hidden;
+}
+.panel { padding: 28px 28px 26px; }
+.label-row { display: flex; justify-content: space-between; align-items: baseline; margin-bottom: 10px; }
+.label { font-family: "JetBrains Mono", monospace; font-size: 10px; letter-spacing: 0.22em; color: var(--fg-dim); text-transform: uppercase; }
+.label-help { font-size: 11px; color: var(--fg-mute); background: none; border: 0; cursor: pointer; font-family: "JetBrains Mono", monospace; letter-spacing: 0.08em; text-transform: uppercase; }
+.label-help:hover { color: var(--accent); }
+
+.input-shell {
+  position: relative; border: 1px solid var(--line-strong); border-radius: 12px;
+  background: rgba(7,9,12,0.6); transition: border-color .2s, box-shadow .2s;
+  display: flex; align-items: stretch;
+}
+.input-shell:focus-within { border-color: var(--accent); box-shadow: 0 0 0 3px var(--accent-soft); }
+.input-shell.error { border-color: var(--danger); box-shadow: 0 0 0 3px rgba(255,106,106,0.12); }
+.input-shell.success { border-color: var(--accent); box-shadow: 0 0 0 3px var(--accent-soft); }
+.input-main {
+  flex: 1; background: transparent; border: 0; outline: 0;
+  padding: 14px 12px; color: var(--fg);
+  font-family: "JetBrains Mono", monospace; font-size: 14px; letter-spacing: 0.04em; min-width: 0;
+}
+.input-main::placeholder { color: var(--fg-mute); letter-spacing: 0.16em; }
+.input-action { background: none; border: 0; cursor: pointer; padding: 0 14px; color: var(--fg-mute); display: grid; place-items: center; transition: color .2s; }
+.input-action:hover { color: var(--fg); }
+
+.meter { height: 3px; margin-top: 10px; background: rgba(255,255,255,0.05); border-radius: 99px; overflow: hidden; display: flex; gap: 3px; }
+.meter span { flex: 1; background: rgba(255,255,255,0.06); border-radius: 99px; transition: background .25s; }
+.meter span.on { background: var(--accent); box-shadow: 0 0 8px var(--accent-glow); }
+
+.hint { margin-top: 12px; display: flex; justify-content: space-between; align-items: center; font-size: 11px; color: var(--fg-mute); font-family: "JetBrains Mono", monospace; letter-spacing: 0.04em; }
+.hint .err { color: var(--danger); }
+.hint .ok  { color: var(--accent); }
+
+.submit {
+  display: flex; align-items: center; justify-content: center; gap: 10px;
+  width: 100%; margin-top: 22px; padding: 14px 18px;
+  background: var(--accent); color: #07090c; border: 0; border-radius: 12px;
+  font: inherit; font-weight: 600; font-size: 14px; letter-spacing: 0.02em;
+  cursor: pointer; transition: transform .12s, box-shadow .2s, filter .2s;
+  box-shadow: 0 12px 40px rgba(182,255,60,0.18), 0 0 0 1px rgba(255,255,255,0.06) inset;
+  position: relative; overflow: hidden;
+}
+.submit:hover { filter: brightness(1.05); }
+.submit:active { transform: translateY(1px); }
+.submit[disabled] { opacity: 0.5; cursor: not-allowed; }
+.submit .arrow { transition: transform .2s; }
+.submit:hover .arrow { transform: translateX(3px); }
+.submit.loading { color: transparent; }
+.submit .spinner-btn { position: absolute; inset: 0; display: grid; place-items: center; color: #07090c; }
+.submit .spinner-btn[hidden] { display: none !important; }
+.submit .spinner-btn::after { content: ""; width: 16px; height: 16px; border: 2px solid rgba(7,9,12,0.25); border-top-color: #07090c; border-radius: 50%; animation: spin .7s linear infinite; }
+
+.footer-cta { margin-top: 28px; display: flex; flex-direction: column; align-items: center; gap: 12px; }
+.footer-cta-text { font-family: "JetBrains Mono", monospace; font-size: 10px; letter-spacing: 0.22em; text-transform: uppercase; color: var(--fg-mute); }
+.footer-cta-actions { display: flex; gap: 8px; }
+.cta { display: inline-flex; align-items: center; gap: 8px; padding: 10px 16px; border-radius: 99px; font: 500 12.5px/1 "Space Grotesk", sans-serif; text-decoration: none; transition: all .2s; }
+.cta-primary { background: rgba(255,255,255,0.04); border: 1px solid var(--line-strong); color: var(--fg); }
+.cta-primary:hover { background: var(--accent-soft); border-color: var(--accent); color: var(--accent); }
+.cta-ghost { background: transparent; border: 1px solid var(--line); color: var(--fg-dim); }
+.cta-ghost:hover { border-color: var(--line-strong); color: var(--fg); }
+
+/* Controls */
+.ctrl-card {
+  width: 100%; max-width: 380px;
+  background: linear-gradient(180deg, rgba(20,26,34,0.78), rgba(12,17,23,0.78));
+  border: 1px solid var(--line); border-radius: 18px;
+  backdrop-filter: blur(14px); box-shadow: 0 30px 80px rgba(0,0,0,0.55); overflow: hidden;
+}
+.scooter-stage {
+  padding: 2rem 1.5rem 1.25rem; text-align: center;
+  background: linear-gradient(180deg, rgba(182,255,60,0.04) 0%, transparent 60%);
+  border-bottom: 1px solid var(--line); position: relative;
+}
+.scooter-ring {
+  position: absolute; top: 50%; left: 50%; transform: translate(-50%, -48%);
+  width: 170px; height: 170px; border-radius: 50%; border: 1px solid rgba(182,255,60,0.1); pointer-events: none;
+}
+.scooter-ring::before { content: ''; position: absolute; inset: 12px; border-radius: 50%; border: 1px solid rgba(182,255,60,0.06); }
+.scooter-svg { position: relative; z-index: 1; margin-bottom: 1rem; }
+.scooter-title-row { display: flex; align-items: center; justify-content: center; gap: 0.45rem; }
+.scooter-title { font-size: 1.05rem; font-weight: 700; }
+.dot { width: 7px; height: 7px; border-radius: 50%; background: var(--fg-mute); flex-shrink: 0; transition: background .3s; }
+.dot.live { background: var(--accent); box-shadow: 0 0 8px var(--accent-glow); animation: blink 2.2s ease-in-out infinite; }
+.dot.busy { background: var(--yellow); animation: blink 0.75s ease-in-out infinite; }
+@keyframes blink { 0%,100% { opacity:1; } 50% { opacity:0.35; } }
+.scooter-sub { font-size: 0.76rem; color: var(--fg-mute); margin-top: 0.25rem; }
+
+.actions { padding: 1rem; display: flex; flex-direction: column; gap: 0.55rem; }
+.btn { border: none; border-radius: 10px; font-size: 0.92rem; font-weight: 700; padding: 0.8rem 1rem; cursor: pointer; display: flex; align-items: center; justify-content: center; gap: 0.5rem; transition: opacity .15s, transform .1s; letter-spacing: 0.15px; font-family: "Space Grotesk", sans-serif; }
+.btn:active { transform: scale(0.97); opacity: 0.88; }
+.btn-green { background: var(--accent); color: #07090c; box-shadow: 0 4px 16px rgba(182,255,60,0.22); }
+.btn-flat { background: rgba(255,255,255,0.06); color: var(--fg); border: 1px solid var(--line); }
+.btn-ghost { background: transparent; color: var(--fg-mute); border: 1px solid var(--line); }
+.btn-row { display: flex; gap: 0.55rem; }
+.btn-row .btn { flex: 1; }
+.btn-out { margin-top: 0.75rem; background: transparent; color: var(--fg-mute); border: 1px solid var(--line); border-radius: 10px; font-size: 0.85rem; font-weight: 600; padding: 0.7rem 1rem; cursor: pointer; width: 100%; max-width: 380px; display: flex; align-items: center; justify-content: center; gap: 0.4rem; font-family: "Space Grotesk", sans-serif; transition: color .15s, border-color .15s; }
+.btn-out:hover { color: var(--fg); border-color: var(--line-strong); }
+
+.status-bar { display: flex; align-items: center; justify-content: space-between; padding: 0.55rem 1rem 0; }
+.status-label { font-size: 0.72rem; color: var(--fg-mute); font-family: "JetBrains Mono", monospace; }
+.btn-refresh { background: none; border: none; color: var(--fg-mute); font-size: 0.75rem; cursor: pointer; padding: 0.2rem 0.4rem; border-radius: 6px; transition: color .15s, background .15s; }
+.btn-refresh:hover { color: var(--accent); background: var(--accent-soft); }
+
+.toast { position: fixed; bottom: 2rem; left: 50%; transform: translateX(-50%) translateY(100px); background: rgba(8,12,16,0.9); border: 1px solid var(--line-strong); border-radius: 99px; padding: 0.6rem 1.4rem; font-size: 0.82rem; font-weight: 600; white-space: nowrap; transition: transform .32s cubic-bezier(0.34,1.56,0.64,1), opacity .28s; opacity: 0; z-index: 200; pointer-events: none; font-family: "Space Grotesk", sans-serif; }
+.toast.show { transform: translateX(-50%) translateY(0); opacity: 1; }
+.toast.ok   { border-color: var(--accent); color: var(--accent); }
+.toast.err  { border-color: var(--danger); color: var(--danger); }
+.toast.info { color: var(--fg); }
+
+.spin { width: 17px; height: 17px; border: 2px solid rgba(255,255,255,0.2); border-top-color: currentColor; border-radius: 50%; animation: spin .65s linear infinite; flex-shrink: 0; }
+.btn-green .spin { border-color: rgba(7,9,12,0.2); border-top-color: #07090c; }
+
+@media (max-width: 420px) { .panel { padding: 22px 20px; } }
+</style>
+</head>
+<body>
+
+<!-- Loading overlay shown while checking saved session -->
+<div id="loading-overlay">
+  <div class="loading-brand">Ride<span>Vault</span></div>
+  <div class="loading-spinner"></div>
+</div>
+
+<!-- Background -->
+<div class="bg" id="bg" aria-hidden="true">
+  <div class="orb"></div>
+  <div class="bg-grid"></div>
+  <div class="scooter-wrap" id="scooterWrap">
+    <svg viewBox="0 0 1100 620" fill="none" stroke="rgba(255,255,255,0.18)" stroke-width="1.4">
+      <line x1="0" y1="500" x2="1100" y2="500" stroke="rgba(255,255,255,0.08)"/>
+      <circle cx="280" cy="470" r="80" stroke="rgba(255,255,255,0.22)"/><circle cx="280" cy="470" r="40" stroke="rgba(255,255,255,0.12)"/><circle cx="280" cy="470" r="6" fill="rgba(255,255,255,0.4)" stroke="none"/>
+      <circle cx="780" cy="470" r="80" stroke="rgba(255,255,255,0.22)"/><circle cx="780" cy="470" r="40" stroke="rgba(255,255,255,0.12)"/><circle cx="780" cy="470" r="6" fill="rgba(255,255,255,0.4)" stroke="none"/>
+      <path d="M 220 460 L 740 460 L 760 470 L 240 470 Z" fill="rgba(255,255,255,0.06)" stroke="rgba(255,255,255,0.22)"/>
+      <line x1="320" y1="460" x2="700" y2="460" stroke="rgba(182,255,60,0.5)" stroke-width="2"/>
+      <path d="M 770 470 L 820 220 L 840 220 L 790 470 Z" fill="rgba(255,255,255,0.06)" stroke="rgba(255,255,255,0.22)"/>
+      <line x1="760" y1="220" x2="900" y2="220" stroke="rgba(255,255,255,0.3)" stroke-width="3" stroke-linecap="round"/>
+      <circle cx="830" cy="240" r="10" fill="rgba(182,255,60,0.5)" stroke="rgba(182,255,60,0.8)"/>
+      <ellipse cx="280" cy="555" rx="100" ry="6" fill="rgba(182,255,60,0.08)" stroke="none"/>
+      <ellipse cx="780" cy="555" rx="100" ry="6" fill="rgba(182,255,60,0.08)" stroke="none"/>
+    </svg>
+  </div>
+  <div class="bg-scan"></div>
+</div>
+
+<!-- Topbar -->
+<div class="topbar">
+  <div class="brand"><div class="brand-mark">R</div><div class="brand-name">Ride<b>Vault</b></div></div>
+  <div class="top-right"><span><span class="status-dot"></span>SECURE · BLE</span><span id="clock">00:00:00 UTC</span></div>
+</div>
+
+<!-- LOGIN -->
+<div class="section visible" id="sec-login">
+  <div class="stage">
+    <div class="hero">
+      <h1 class="wordmark">Ride<span class="v">Vault</span></h1>
+      <p class="tagline">Secure access · Token gateway</p>
+      <div class="card-login">
+        <div class="panel">
+          <form id="form" novalidate>
+            <div class="label-row">
+              <span class="label">Access Key</span>
+              <button type="button" class="label-help" id="pasteBtn">Paste</button>
+            </div>
+            <div class="input-shell" id="inputShell">
+              <input class="input-main" id="tokenInput" type="password"
+                spellcheck="false" autocomplete="off" placeholder="••••  ••••  ••••  ••••" maxlength="48" />
+              <button type="button" class="input-action" id="toggleVis">
+                <svg id="eyeIcon" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8">
+                  <path d="M2 12s4-7 10-7 10 7 10 7-4 7-10 7S2 12 2 12z"/><circle cx="12" cy="12" r="3"/>
+                </svg>
+              </button>
+            </div>
+            <div class="meter" id="meter"><span></span><span></span><span></span><span></span><span></span><span></span></div>
+            <div class="hint">
+              <span id="hintLeft">Enter your access key</span>
+              <span id="hintRight">0 / 16</span>
+            </div>
+            <div id="login-err" style="margin-top:10px;font-size:12px;color:var(--danger);font-family:'JetBrains Mono',monospace;min-height:1em"></div>
+            <button class="submit" id="submitBtn" type="submit" disabled>
+              <span class="label-text">Verify key</span>
+              <svg class="arrow" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M5 12h14M13 5l7 7-7 7"/></svg>
+              <span class="spinner-btn" hidden></span>
+            </button>
+          </form>
+        </div>
+      </div>
+      <div class="footer-cta">
+        <div class="footer-cta-text">No key?</div>
+        <div class="footer-cta-actions">
+          <a href="https://discord.gg/9b5H7mysuz" target="_blank" rel="noopener" class="cta cta-primary">
+            <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M19 8v6M22 11h-6"/></svg>
+            Request access
+          </a>
+          <a href="https://discord.gg/9b5H7mysuz" target="_blank" rel="noopener" class="cta cta-ghost">
+            <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><path d="M9.1 9a3 3 0 0 1 5.8 1c0 2-3 3-3 3"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>
+            Help
+          </a>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- CONNECT -->
+<div class="section" id="sec-connect">
+  <div class="ctrl-card">
+    <div class="scooter-stage">
+      <div class="scooter-ring"></div>
+      <svg class="scooter-svg" width="200" height="120" viewBox="0 0 200 120" fill="none">
+        <circle cx="38"  cy="92" r="22" stroke="#b6ff3c" stroke-width="2" opacity="0.25"/><circle cx="38"  cy="92" r="16" stroke="#b6ff3c" stroke-width="2.5" opacity="0.55"/><circle cx="38"  cy="92" r="6"  fill="#b6ff3c"   opacity="0.3"/>
+        <circle cx="162" cy="92" r="22" stroke="#b6ff3c" stroke-width="2" opacity="0.25"/><circle cx="162" cy="92" r="16" stroke="#b6ff3c" stroke-width="2.5" opacity="0.55"/><circle cx="162" cy="92" r="6"  fill="#b6ff3c"   opacity="0.3"/>
+        <rect x="52" y="84" width="80" height="10" rx="5" fill="#1c1c22" stroke="#b6ff3c" stroke-width="1.8" opacity="0.8"/>
+        <path d="M108 89 L130 48" stroke="#b6ff3c" stroke-width="3" stroke-linecap="round"/>
+        <line x1="130" y1="48" x2="148" y2="24" stroke="#b6ff3c" stroke-width="3" stroke-linecap="round"/>
+        <path d="M148 48 L162 76" stroke="#b6ff3c" stroke-width="2.8" stroke-linecap="round"/>
+        <path d="M130 48 L148 48" stroke="#b6ff3c" stroke-width="2.2" stroke-linecap="round"/>
+        <line x1="148" y1="24" x2="148" y2="14" stroke="#b6ff3c" stroke-width="2.8" stroke-linecap="round"/>
+        <path d="M138 14 L158 14" stroke="#b6ff3c" stroke-width="3" stroke-linecap="round"/>
+        <rect x="136" y="11" width="5" height="6" rx="2.5" fill="#b6ff3c" opacity="0.7"/>
+        <rect x="159" y="11" width="5" height="6" rx="2.5" fill="#b6ff3c" opacity="0.7"/>
+      </svg>
+      <div class="scooter-title-row"><div class="dot" id="conn-dot"></div><div class="scooter-title">No scooter connected</div></div>
+      <div class="scooter-sub" id="conn-status">Ready to connect</div>
+    </div>
+    <div class="actions">
+      <button class="btn btn-green" id="btn-connect" onclick="doConnect()" style="font-size:1rem;padding:0.95rem">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.3" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12.55a11 11 0 0 1 14.08 0"/><path d="M1.42 9a16 16 0 0 1 21.16 0"/><path d="M8.53 16.11a6 6 0 0 1 6.95 0"/><circle cx="12" cy="20" r="1" fill="currentColor"/></svg>
+        Connect to scooter
+      </button>
+    </div>
+  </div>
+  <button class="btn-out" onclick="doLogout()">
+    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><polyline points="16 17 21 12 16 7"/><line x1="21" y1="12" x2="9" y2="12"/></svg>
+    Sign out
+  </button>
+</div>
+
+<!-- CONTROLS -->
+<div class="section" id="sec-controls">
+  <div class="ctrl-card">
+    <div class="scooter-stage">
+      <div class="scooter-ring"></div>
+      <svg class="scooter-svg" width="200" height="120" viewBox="0 0 200 120" fill="none">
+        <circle cx="38"  cy="92" r="22" stroke="#b6ff3c" stroke-width="2" opacity="0.35"/><circle cx="38"  cy="92" r="16" stroke="#b6ff3c" stroke-width="2.5"/><circle cx="38"  cy="92" r="6"  fill="#b6ff3c"   opacity="0.45"/>
+        <circle cx="162" cy="92" r="22" stroke="#b6ff3c" stroke-width="2" opacity="0.35"/><circle cx="162" cy="92" r="16" stroke="#b6ff3c" stroke-width="2.5"/><circle cx="162" cy="92" r="6"  fill="#b6ff3c"   opacity="0.45"/>
+        <rect x="52" y="84" width="80" height="10" rx="5" fill="#1c1c22" stroke="#b6ff3c" stroke-width="1.8"/>
+        <path d="M108 89 L130 48" stroke="#b6ff3c" stroke-width="3" stroke-linecap="round"/>
+        <line x1="130" y1="48" x2="148" y2="24" stroke="#b6ff3c" stroke-width="3" stroke-linecap="round"/>
+        <path d="M148 48 L162 76" stroke="#b6ff3c" stroke-width="2.8" stroke-linecap="round"/>
+        <path d="M130 48 L148 48" stroke="#b6ff3c" stroke-width="2.2" stroke-linecap="round"/>
+        <line x1="148" y1="24" x2="148" y2="14" stroke="#b6ff3c" stroke-width="2.8" stroke-linecap="round"/>
+        <path d="M138 14 L158 14" stroke="#b6ff3c" stroke-width="3" stroke-linecap="round"/>
+        <rect x="136" y="11" width="5" height="6" rx="2.5" fill="#b6ff3c"/>
+        <rect x="159" y="11" width="5" height="6" rx="2.5" fill="#b6ff3c"/>
+        <circle cx="162" cy="72" r="7" fill="#b6ff3c" opacity="0.2"/><circle cx="162" cy="72" r="4" fill="#b6ff3c" opacity="0.7"/><circle cx="162" cy="72" r="1.8" fill="white"/>
+      </svg>
+      <div class="scooter-title-row"><div class="dot live" id="ctrl-dot"></div><div class="scooter-title" id="scooter-name-ctrl">Scooter</div></div>
+      <div class="scooter-sub" id="conn-status-ctrl">Connected</div>
+    </div>
+    <div class="status-bar">
+      <span class="status-label" id="conn-status2">Connected</span>
+      <button class="btn-refresh" onclick="doRefreshStatus()">
+        <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><polyline points="23 4 23 10 17 10"/><path d="M20.49 15a9 9 0 1 1-2.12-9.36L23 10"/></svg>
+        Refresh
+      </button>
+    </div>
+    <div class="actions">
+      <div class="btn-row">
+        <button class="btn btn-green" id="btn-unlock" onclick="doCommand('unlock')">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.3" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="11" width="18" height="11" rx="2"/><path d="M7 11V7a5 5 0 0 1 9.9-1"/></svg>
+          Unlock
+        </button>
+        <button class="btn btn-flat" id="btn-lock" onclick="doCommand('lock')">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.3" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="11" width="18" height="11" rx="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>
+          Lock
+        </button>
+      </div>
+      <div class="btn-row" id="btn-bat-row">
+        <button class="btn btn-flat" onclick="doCommand('bat_unlock')">
+          <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="7" width="16" height="10" rx="2"/><path d="M22 11v2"/><line x1="6" y1="11" x2="12" y2="11"/></svg>
+          Open battery
+        </button>
+        <button class="btn btn-flat" onclick="doCommand('bat_lock')">
+          <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="7" width="16" height="10" rx="2"/><path d="M22 11v2"/></svg>
+          Close battery
+        </button>
+      </div>
+      <div class="btn-row" style="margin-top:0.1rem">
+        <button class="btn btn-ghost" onclick="doDisconnect()">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+          Disconnect
+        </button>
+        <button class="btn btn-ghost" onclick="doLogout()">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><polyline points="16 17 21 12 16 7"/><line x1="21" y1="12" x2="9" y2="12"/></svg>
+          Sign out
+        </button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<button class="status-pill" id="statusPill" type="button">
+  <span class="status-pill-dot"></span>
+  <span id="statusPillLabel">Active</span>
+  <span class="status-pill-meta" id="statusPing">– ms</span>
+</button>
+
+<div class="bat-pill" id="batPill">
+  <span style="display:flex;align-items:center;color:var(--accent)">
+    <svg width="16" height="11" viewBox="0 0 16 11" fill="none">
+      <rect x="0.5" y="0.5" width="13" height="10" rx="2" stroke="currentColor" stroke-opacity="0.6"/>
+      <rect id="batPillFillRect" x="2" y="2" width="9" height="7" rx="1" fill="currentColor"/>
+      <path d="M14.5 3.5v4" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/>
+    </svg>
+  </span>
+  <span class="bat-pill-pct" id="batPillPct">–%</span>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script>
+"use strict";
+
+const API = "https://blurproxy-plus.ridevault.workers.dev";
+
+const BLE_PROFILES = {
+  new: {
+    service: "86531001-43e6-47b7-9cb0-5fc21d4ae340",
+    write:   "86531002-43e6-47b7-9cb0-5fc21d4ae340",
+    notify:  "86531003-43e6-47b7-9cb0-5fc21d4ae340",
+  },
+  old: {
+    service: "00001001-0000-1000-8000-00805f9b34fb",
+    write:   "00001002-0000-1000-8000-00805f9b34fb",
+    notify:  "00001003-0000-1000-8000-00805f9b34fb",
+  },
+};
+const CMD = { init:0x01, status:0x02, unlock:0x10, lock:0x11, bat_unlock:0x20, bat_lock:0x21 };
+
+function hex2bytes(hex) {
+  const a = new Uint8Array(hex.length / 2);
+  for (let i = 0; i < a.length; i++) a[i] = parseInt(hex.substr(i*2,2),16);
+  return a;
+}
+function bytes2hex(buf) {
+  return Array.from(new Uint8Array(buf)).map(b => b.toString(16).padStart(2,"0")).join("");
+}
+function makeNonce() {
+  const b = new Uint8Array(8); crypto.getRandomValues(b); return bytes2hex(b);
+}
+async function maskPacket(packetBytes, sessionKey, nonce) {
+  const km = new TextEncoder().encode(sessionKey + nonce);
+  const hb = await crypto.subtle.digest("SHA-256", km);
+  const mask = new Uint8Array(hb);
+  return packetBytes.map((b, i) => b ^ mask[i % 32]);
+}
+async function buildInitPacket(sessionKey, nonce) {
+  const keyHash = new Uint8Array(await crypto.subtle.digest("SHA-256", new TextEncoder().encode(sessionKey)));
+  const nonceBytes = hex2bytes(nonce);
+  const pkt = new Uint8Array(14);
+  pkt[0] = CMD.init;
+  pkt.set(nonceBytes, 1);
+  pkt.set(keyHash.slice(0,4), 9);
+  pkt[13] = pkt.slice(0,13).reduce((a,b) => (a+b)&0xff, 0);
+  return pkt;
+}
+function buildCommandPacket(action, nonce) {
+  const opcode = CMD[action];
+  const nonceBytes = hex2bytes(nonce);
+  const seq = Math.floor(Math.random() * 256);
+  const pkt = new Uint8Array(11);
+  pkt[0] = opcode; pkt.set(nonceBytes, 1); pkt[9] = seq;
+  pkt[10] = pkt.slice(0,10).reduce((a,b) => (a+b)&0xff, 0);
+  return pkt;
+}
+function parseInitResponse(respBytes) {
+  if (!respBytes || respBytes.length < 2) return { ok:false, error:"Empty response" };
+  if (respBytes[0] !== 0x81) return { ok:false, error:`Bad opcode: 0x${respBytes[0].toString(16)}` };
+  if (respBytes[1] !== 0x00) return { ok:false, error:`Scooter error: 0x${respBytes[1].toString(16)}` };
+  return { ok:true, battery: respBytes.length > 2 ? respBytes[2] : null };
+}
+function parseCommandResponse(action, respBytes) {
+  if (!respBytes || respBytes.length < 3) return { ok:false, error:"Short response" };
+  const expectedOpcode = CMD[action] | 0x80;
+  if (respBytes[0] !== expectedOpcode && action !== "status") return { ok:false, error:"Opcode mismatch" };
+  if (respBytes[1] !== 0x00) return { ok:false, error:`Error status: 0x${respBytes[1].toString(16)}` };
+  const flags = respBytes[2] ?? 0;
+  return { ok:true, locked:!!(flags&0x01), batOpen:!!(flags&0x02), battery: respBytes[3] ?? null };
+}
+
+let sessionToken = null;  // from /api/UseKey or localStorage
+let sessionKey   = null;  // BLE session key derived after server auth
+let scooterType  = "new";
+let bleDevice=null, bleWrite=null, bleNotify=null, statusInt=null, toastTimer=null;
+
+const clockEl = document.getElementById("clock");
+function tick() { const d=new Date(),p=n=>String(n).padStart(2,"0"); clockEl.textContent=`${p(d.getUTCHours())}:${p(d.getUTCMinutes())}:${p(d.getUTCSeconds())} UTC`; }
+tick(); setInterval(tick, 1000);
+setInterval(() => { document.getElementById("statusPing").textContent=(10+Math.floor(Math.random()*8))+" ms"; }, 2400);
+
+const scooterWrap = document.getElementById("scooterWrap");
+document.addEventListener("mousemove", e => {
+  const x=(e.clientX/window.innerWidth-0.5)*12, y=(e.clientY/window.innerHeight-0.5)*8;
+  scooterWrap.style.transform=`translate(${x}px,${y}px)`;
+});
+
+// ── UI helpers ────────────────────────────────────────────────────────────────
+function toast(msg, type="info", ms=2800) {
+  const el=document.getElementById("toast"); el.textContent=msg; el.className="toast show "+type;
+  clearTimeout(toastTimer); toastTimer=setTimeout(()=>el.className="toast",ms);
+}
+function show(id) {
+  ["sec-login","sec-connect","sec-controls"].forEach(s=>document.getElementById(s).classList.remove("visible"));
+  document.getElementById(id).classList.add("visible");
+  const onLogin = id==="sec-login";
+  document.getElementById("bg").style.display=onLogin?"":"none";
+  document.getElementById("statusPill").style.display=onLogin?"":"none";
+}
+function setStatus(text, busy=false) {
+  ["conn-status","conn-status-ctrl","conn-status2"].forEach(sid=>{const el=document.getElementById(sid);if(el)el.textContent=text;});
+  const dot=document.getElementById("ctrl-dot"); if(dot) dot.className="dot"+(busy?" busy":" live");
+}
+function setLoading(btnId, on) {
+  const btn=document.getElementById(btnId); if(!btn)return;
+  if(on){btn._orig=btn.innerHTML;btn.innerHTML='<span class="spin"></span>';btn.disabled=true;}
+  else{if(btn._orig)btn.innerHTML=btn._orig;btn.disabled=false;}
+}
+function setBattery(pct) {
+  const pill=document.getElementById("batPill");
+  if(pct==null){pill.classList.remove("visible");return;}
+  const color=pct>40?"var(--accent)":pct>20?"var(--yellow)":"var(--danger)";
+  document.getElementById("batPillPct").textContent=pct+"%";
+  document.getElementById("batPillPct").style.color=color;
+  const fillW=Math.round(Math.min(9,Math.max(0,(pct/100)*9)));
+  const rect=document.getElementById("batPillFillRect");
+  rect.setAttribute("width",fillW); rect.setAttribute("fill",pct>40?"#b6ff3c":pct>20?"#ffb547":"#ff6a6a");
+  pill.style.borderColor=color; pill.classList.add("visible");
+}
+function hideLoader() {
+  const el=document.getElementById("loading-overlay");
+  el.classList.add("fade");
+  setTimeout(()=>el.style.display="none",400);
+}
+
+// ── API calls ─────────────────────────────────────────────────────────────────
+async function apiUseKey(token) {
+  const r = await fetch(API+"/api/UseKey", {
+    method:"POST",
+    headers:{"Content-Type":"application/json"},
+    body:JSON.stringify({ token }),
+  });
+  const d = await r.json();
+  if(!r.ok || !d.ok) throw new Error(d.error || "Key rejected");
+  return d.sessionToken;
+}
+
+async function apiVerifySession(st) {
+  const r = await fetch(API+"/api/VerifySession", {
+    method:"POST",
+    headers:{"Content-Type":"application/json"},
+    body:JSON.stringify({ sessionToken: st }),
+  });
+  const d = await r.json();
+  return d.ok && d.valid;
+}
+
+// BLE session key = SHA-256(sessionToken + "ble-session") — never sent to server
+async function deriveBleKey(st) {
+  const buf = await crypto.subtle.digest("SHA-256", new TextEncoder().encode(st+"ble-session"));
+  return bytes2hex(new Uint8Array(buf));
+}
+
+// ── Auto-login on page load ───────────────────────────────────────────────────
+(async function checkSavedSession() {
+  try {
+    const saved = localStorage.getItem("rv_session");
+    if (saved) {
+      const valid = await apiVerifySession(saved);
+      if (valid) {
+        sessionToken = saved;
+        sessionKey   = await deriveBleKey(saved);
+        hideLoader();
+        show("sec-connect");
+        return;
+      } else {
+        localStorage.removeItem("rv_session");
+      }
+    }
+  } catch(e) { /* network error, fall through to login */ }
+  hideLoader();
+  show("sec-login");
+})();
+
+// ── Login form ────────────────────────────────────────────────────────────────
+const tokenInput=document.getElementById("tokenInput");
+const meterEl=document.getElementById("meter");
+const meterCells=[...meterEl.children];
+const hintLeft=document.getElementById("hintLeft");
+const hintRight=document.getElementById("hintRight");
+const submitBtn=document.getElementById("submitBtn");
+const labelText=submitBtn.querySelector(".label-text");
+const spinnerBtn=submitBtn.querySelector(".spinner-btn");
+const arrowEl=submitBtn.querySelector(".arrow");
+const shell=document.getElementById("inputShell");
+const loginErr=document.getElementById("login-err");
+
+function updateMeter() {
+  const len=tokenInput.value.trim().length;
+  hintRight.textContent=`${Math.min(len,48)} / 16`;
+  const filled=Math.min(meterCells.length,Math.floor(len/(48/meterCells.length)));
+  meterCells.forEach((c,i)=>c.classList.toggle("on",i<filled));
+  shell.classList.remove("error","success");
+  submitBtn.disabled=len<16;
+  if(len===0) hintLeft.innerHTML="Enter your access key";
+  else if(len<16) hintLeft.innerHTML=`<span class="err">Need ${16-len} more characters</span>`;
+  else hintLeft.innerHTML=`<span class="ok">Key length looks good</span>`;
+}
+tokenInput.addEventListener("input",updateMeter); updateMeter();
+
+document.getElementById("pasteBtn").addEventListener("click", async()=>{
+  try{ const t=await navigator.clipboard.readText(); tokenInput.value=t.trim().slice(0,48); updateMeter(); tokenInput.focus(); }
+  catch{ tokenInput.focus(); }
+});
+
+let tokenVisible=false;
+document.getElementById("toggleVis").addEventListener("click",()=>{
+  tokenVisible=!tokenVisible; tokenInput.type=tokenVisible?"text":"password";
+  document.getElementById("eyeIcon").innerHTML=tokenVisible
+    ?'<path d="M2 12s4-7 10-7 10 7 10 7-4 7-10 7S2 12 2 12z"/><circle cx="12" cy="12" r="3"/><line x1="3" y1="3" x2="21" y2="21"/>'
+    :'<path d="M2 12s4-7 10-7 10 7 10 7-4 7-10 7S2 12 2 12z"/><circle cx="12" cy="12" r="3"/>';
+});
+
+document.getElementById("form").addEventListener("submit", async(e)=>{
+  e.preventDefault();
+  const token=tokenInput.value.trim();
+  if(token.length<16) return;
+  loginErr.textContent="";
+  submitBtn.classList.add("loading"); spinnerBtn.hidden=false; submitBtn.disabled=true;
+  try {
+    const st = await apiUseKey(token);
+    // Save session token to localStorage for auto-login next time
+    localStorage.setItem("rv_session", st);
+    sessionToken = st;
+    sessionKey   = await deriveBleKey(st);
+    tokenInput.value=""; updateMeter();
+    shell.classList.add("success");
+    labelText.textContent="Access granted"; arrowEl.style.opacity="0";
+    hintLeft.innerHTML=`<span class="ok">✓ Verified</span>`;
+    setTimeout(()=>{ submitBtn.classList.remove("loading"); spinnerBtn.hidden=true; show("sec-connect"); }, 600);
+  } catch(err) {
+    submitBtn.classList.remove("loading"); spinnerBtn.hidden=true; submitBtn.disabled=false;
+    shell.classList.add("error");
+    const msg = err.message || "Key not accepted";
+    loginErr.textContent = msg.includes("different device") ? "Key is locked to another device" : msg.includes("not found") ? "Key not found" : "Key not accepted";
+    hintLeft.innerHTML=`<span class="err">Access denied</span>`;
+    tokenInput.animate([{transform:"translateX(0)"},{transform:"translateX(-6px)"},{transform:"translateX(6px)"},{transform:"translateX(0)"}],{duration:280});
+  }
+});
+
+tokenInput.addEventListener("keydown",e=>{if(e.key==="Enter")document.getElementById("form").requestSubmit();});
+
+function doLogout() {
+  localStorage.removeItem("rv_session");
+  sessionToken=null; sessionKey=null;
+  clearInterval(statusInt); doDisconnect();
+  submitBtn.classList.remove("loading"); spinnerBtn.hidden=true;
+  arrowEl.style.opacity="1"; labelText.textContent="Verify key"; submitBtn.disabled=true;
+  tokenInput.value=""; updateMeter(); shell.classList.remove("error","success"); loginErr.textContent="";
+  show("sec-login");
+}
+
+// ── BLE ───────────────────────────────────────────────────────────────────────
+async function doConnect() {
+  if(!sessionKey){toast("Not authenticated","err");return;}
+  setLoading("btn-connect",true);
+  const profile=BLE_PROFILES[scooterType];
+  const nonce=makeNonce();
+  const rawPkt=await buildInitPacket(sessionKey,nonce);
+  const pkt=await maskPacket(rawPkt,sessionKey,nonce);
+  try {
+    bleDevice=await navigator.bluetooth.requestDevice({
+      filters:[{services:[BLE_PROFILES.new.service]},{services:[BLE_PROFILES.old.service]}],
+      optionalServices:[BLE_PROFILES.new.service,BLE_PROFILES.old.service],
+    });
+  } catch{ toast("Bluetooth cancelled","info"); setLoading("btn-connect",false); return; }
+  bleDevice.addEventListener("gattserverdisconnected",onDisconnected);
+  const name=bleDevice.name||"Scooter";
+  try {
+    const server=await bleDevice.gatt.connect();
+    const service=await server.getPrimaryService(profile.service);
+    bleWrite=await service.getCharacteristic(profile.write);
+    bleNotify=await service.getCharacteristic(profile.notify);
+    await bleNotify.startNotifications();
+    const resp=await writeAndWait(pkt);
+    const unmasked=await maskPacket(new Uint8Array(resp.buffer),sessionKey,nonce);
+    const parsed=parseInitResponse(unmasked);
+    if(!parsed.ok){toast("Handshake failed","err");setLoading("btn-connect",false);doDisconnect();return;}
+    document.getElementById("scooter-name-ctrl").textContent=name;
+    setStatus("Connected"); setBattery(parsed.battery??null);
+    show("sec-controls"); setLoading("btn-connect",false);
+    await fetchStatus(); statusInt=setInterval(fetchStatus,60000);
+  } catch(e){ toast(e.message||"Connection failed","err"); setLoading("btn-connect",false); doDisconnect(); }
+}
+
+function writeAndWait(bytes,timeout=7000) {
+  return new Promise((resolve,reject)=>{
+    const timer=setTimeout(()=>{bleNotify.removeEventListener("characteristicvaluechanged",handler);reject(new Error("No response from scooter"));},timeout);
+    function handler(e){clearTimeout(timer);bleNotify.removeEventListener("characteristicvaluechanged",handler);resolve(e.target.value);}
+    bleNotify.addEventListener("characteristicvaluechanged",handler);
+    bleWrite.writeValueWithResponse(bytes).catch(err=>{clearTimeout(timer);bleNotify.removeEventListener("characteristicvaluechanged",handler);reject(err);});
+  });
+}
+
+async function fetchStatus() {
+  if(!bleWrite||!sessionKey)return;
+  try {
+    const nonce=makeNonce();
+    const pkt=await maskPacket(buildCommandPacket("status",nonce),sessionKey,nonce);
+    const resp=await writeAndWait(pkt);
+    const unmasked=await maskPacket(new Uint8Array(resp.buffer),sessionKey,nonce);
+    const result=parseCommandResponse("status",unmasked);
+    if(result.ok&&result.battery!=null)setBattery(result.battery);
+  } catch{ /* silent */ }
+}
+
+async function doRefreshStatus(){setStatus("Refreshing…",true);await fetchStatus();setStatus("Connected");}
+
+async function doCommand(action) {
+  if(!bleWrite){toast("Not connected","err");return;}
+  const btnMap={unlock:"btn-unlock",lock:"btn-lock"};
+  const btn=btnMap[action]||null; if(btn)setLoading(btn,true); setStatus("Working…",true);
+  try {
+    const nonce=makeNonce();
+    const pkt=await maskPacket(buildCommandPacket(action,nonce),sessionKey,nonce);
+    const resp=await writeAndWait(pkt);
+    const unmasked=await maskPacket(new Uint8Array(resp.buffer),sessionKey,nonce);
+    const result=parseCommandResponse(action,unmasked);
+    if(!result.ok){toast("Command failed — try again","err");return;}
+    if(action==="unlock"){toast(result.locked?"Still locked — try again":"Unlocked ✓",result.locked?"err":"ok");setStatus(result.locked?"Connected":"Unlocked");}
+    else if(action==="lock"){toast(result.locked?"Locked ✓":"Could not lock — try again",result.locked?"ok":"err");setStatus(result.locked?"Locked":"Connected");}
+    else if(action==="bat_unlock"){toast("Battery compartment open","ok");setStatus("Connected");}
+    else if(action==="bat_lock"){toast("Battery compartment closed","ok");setStatus("Connected");}
+    if(result.battery!=null)setBattery(result.battery);
+  } catch(e){ toast(e.message||"Something went wrong","err"); setStatus("Connected"); }
+  finally{ if(btn)setLoading(btn,false); }
+}
+
+function doDisconnect(){
+  clearInterval(statusInt);
+  if(bleDevice?.gatt?.connected)bleDevice.gatt.disconnect();
+  bleDevice=bleWrite=bleNotify=null;
+  if(sessionToken){setBattery(null);show("sec-connect");}
+}
+function onDisconnected(){
+  clearInterval(statusInt); bleWrite=bleNotify=null;
+  if(sessionToken){setBattery(null);show("sec-connect");toast("Scooter disconnected","err");}
+}
+</script>
+</body>
+</html>
