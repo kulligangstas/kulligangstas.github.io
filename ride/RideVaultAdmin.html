@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8"/>
 <meta name="viewport" content="width=device-width,initial-scale=1"/>
-<title>RideVault Admin</title>
+<title>RideClub Admin</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
@@ -188,7 +188,7 @@ body{font-family:"Space Grotesk",sans-serif;background:var(--bg);color:var(--fg)
 <div id="app">
   <div class="topbar">
     <div style="display:flex;align-items:center;gap:16px;">
-      <div class="brand"><div class="brand-mark">R</div><div>Ride<b>Vault</b></div></div>
+      <div class="brand"><div class="brand-mark">R</div><div>Ride<b>Club</b></div></div>
       <div class="admin-badge">Admin Panel</div>
     </div>
     <div class="topbar-right">
@@ -297,7 +297,7 @@ let adminPass = null;
 let toastTimer = null;
 
 // ── Auth ──────────────────────────────────────────────────────────────────────
-document.getElementById("authInput").addEventListener("keydown", e => { if(e.key==="Enter") tryAuth(); });
+document.getElementById("authInput").addEventListener("keydown", e => { if (e.key === "Enter") tryAuth(); });
 
 async function tryAuth() {
   const pw  = document.getElementById("authInput").value;
@@ -305,8 +305,7 @@ async function tryAuth() {
   if (!pw) { err.textContent = "Enter password"; return; }
   document.getElementById("authBtn").textContent = "Checking…";
   try {
-    // Use GetUsedKeys instead of GetKey — works even when pool is empty
-    const r = await fetch(API + "/api/GetUsedKeys", {
+    const r = await fetch(API + "/api/Stats", {
       headers: { "X-Admin-Password": pw }
     });
     if (r.status === 401) {
@@ -325,165 +324,193 @@ async function tryAuth() {
   }
 }
 
-function signOut(){
-  adminPass=null;
-  document.getElementById("auth-gate").style.display="flex";
-  document.getElementById("app").style.display="none";
-  document.getElementById("authInput").value="";
-  document.getElementById("authErr").textContent="";
+function signOut() {
+  adminPass = null;
+  document.getElementById("auth-gate").style.display = "flex";
+  document.getElementById("app").style.display = "none";
+  document.getElementById("authInput").value = "";
+  document.getElementById("authErr").textContent = "";
   document.getElementById("authInput").classList.remove("err");
-  document.getElementById("authBtn").textContent="Unlock admin panel";
+  document.getElementById("authBtn").textContent = "Unlock admin panel";
 }
 
 // ── Toast ─────────────────────────────────────────────────────────────────────
-function toast(msg, type="info", ms=2800) {
-  const el=document.getElementById("toast"); el.textContent=msg; el.className="toast show "+type;
-  clearTimeout(toastTimer); toastTimer=setTimeout(()=>el.className="toast",ms);
+function toast(msg, type = "info", ms = 2800) {
+  const el = document.getElementById("toast");
+  el.textContent = msg; el.className = "toast show " + type;
+  clearTimeout(toastTimer); toastTimer = setTimeout(() => el.className = "toast", ms);
 }
 
 // ── Output helper ─────────────────────────────────────────────────────────────
-function setOut(id, content, type="info") {
-  const el=document.getElementById(id); el.className="output show "+type; el.innerHTML=content;
+function setOut(id, content, type = "info") {
+  const el = document.getElementById(id);
+  el.className = "output show " + type;
+  el.innerHTML = content;
 }
 
-// ── Admin API ─────────────────────────────────────────────────────────────────
-function adminHeaders() {
-  return { "Content-Type":"application/json", "X-Admin-Password": adminPass };
+// ── Admin API helpers ─────────────────────────────────────────────────────────
+function adminHeaders(withBody = false) {
+  const h = { "X-Admin-Password": adminPass };
+  if (withBody) h["Content-Type"] = "application/json";
+  return h;
 }
 
+// GET endpoint wrapper
 async function apiGet(path) {
-  const r = await fetch(API+path, { headers: adminHeaders() });
+  const r = await fetch(API + path, { headers: adminHeaders() });
   const d = await r.json();
-  if(!r.ok || !d.ok) throw new Error(d.error || "Request failed");
+  if (!r.ok || !d.ok) throw new Error(d.error || "Request failed");
   return d;
 }
 
+// POST endpoint wrapper
+async function apiPost(path, body = {}) {
+  const r = await fetch(API + path, {
+    method: "POST",
+    headers: adminHeaders(true),
+    body: JSON.stringify(body),
+  });
+  const d = await r.json();
+  if (!r.ok || !d.ok) throw new Error(d.error || "Request failed");
+  return d;
+}
+
+// DELETE endpoint wrapper
+async function apiDelete(path) {
+  const r = await fetch(API + path, {
+    method: "DELETE",
+    headers: adminHeaders(),
+  });
+  const d = await r.json();
+  if (!r.ok || !d.ok) throw new Error(d.error || "Request failed");
+  return d;
+}
+
+// ── Stats ─────────────────────────────────────────────────────────────────────
 async function loadStats() {
   try {
-    const used = await apiGet("/api/GetUsedKeys");
-    const usedCount = used.keys.length;
-    document.getElementById("stat-used").textContent = usedCount;
-
-    // Get a free key just to confirm pool has entries (don't expose it)
-    // Instead, generate a temp check — or just show used + note
-    // Best we can do without a /api/Stats endpoint:
-    document.getElementById("stat-total").textContent = "—";
-    document.getElementById("stat-free").textContent  = "—";
-    document.getElementById("stat-used").textContent  = usedCount;
+    const d = await apiGet("/api/Stats");
+    document.getElementById("stat-total").textContent = d.total;
+    document.getElementById("stat-used").textContent  = d.used;
+    document.getElementById("stat-free").textContent  = d.free;
   } catch { /* silent */ }
 }
 
+// ── Generate key — POST /api/GenerateKey ─────────────────────────────────────
 async function doGenerate() {
   const btn = document.getElementById("genBtn");
-  btn.innerHTML = '<span class="spin"></span> Generating…'; btn.disabled=true;
+  btn.innerHTML = '<span class="spin"></span> Generating…'; btn.disabled = true;
   try {
-    const d = await apiGet("/api/GenerateKey");
+    const d = await apiPost("/api/GenerateKey");
     setOut("out-generate",
-      `<div style="margin-bottom:4px;color:var(--dim);font-size:10px;letter-spacing:0.15em;">NEW KEY</div>`+
-      `<div style="font-size:14px;letter-spacing:0.08em;word-break:break-all;">${d.token}</div>`+
+      `<div style="margin-bottom:4px;color:var(--dim);font-size:10px;letter-spacing:0.15em;">NEW KEY</div>` +
+      `<div style="font-size:14px;letter-spacing:0.08em;word-break:break-all;">${d.token}</div>` +
       `<div style="margin-top:8px;"><button onclick="copyToClipboard('${d.token}',this)" style="background:var(--accS);border:1px solid rgba(182,255,60,0.25);color:var(--acc);border-radius:6px;padding:4px 12px;font-size:11px;cursor:pointer;font-family:'Space Grotesk',sans-serif;font-weight:600;">Copy</button></div>`,
       "ok"
     );
     toast("Key generated", "ok");
     loadStats();
-  } catch(e){ setOut("out-generate", e.message, "err"); toast("Failed: "+e.message,"err"); }
-  finally{ btn.innerHTML="Generate new key"; btn.disabled=false; }
+  } catch (e) {
+    setOut("out-generate", e.message, "err");
+    toast("Failed: " + e.message, "err");
+  } finally {
+    btn.innerHTML = "Generate new key"; btn.disabled = false;
+  }
 }
 
+// ── Get unused key — GET /api/GetKey ─────────────────────────────────────────
 async function doGetKey() {
   try {
     const d = await apiGet("/api/GetKey");
     setOut("out-getkey",
-      `<div style="margin-bottom:4px;color:var(--dim);font-size:10px;letter-spacing:0.15em;">UNUSED KEY</div>`+
-      `<div style="font-size:14px;letter-spacing:0.08em;word-break:break-all;">${d.token}</div>`+
+      `<div style="margin-bottom:4px;color:var(--dim);font-size:10px;letter-spacing:0.15em;">UNUSED KEY</div>` +
+      `<div style="font-size:14px;letter-spacing:0.08em;word-break:break-all;">${d.token}</div>` +
       `<div style="margin-top:8px;"><button onclick="copyToClipboard('${d.token}',this)" style="background:var(--accS);border:1px solid rgba(182,255,60,0.25);color:var(--acc);border-radius:6px;padding:4px 12px;font-size:11px;cursor:pointer;font-family:'Space Grotesk',sans-serif;font-weight:600;">Copy</button></div>`,
       "ok"
     );
-  } catch(e){
+  } catch (e) {
     setOut("out-getkey", e.message.includes("No unused") ? "No unused keys in pool" : e.message, "err");
   }
 }
 
+// ── Check key — GET /api/CheckKey?token= ─────────────────────────────────────
 async function doCheckKey() {
   const token = document.getElementById("checkInput").value.trim();
-  if(!token){ toast("Enter a key to check","err"); return; }
+  if (!token) { toast("Enter a key to check", "err"); return; }
   try {
-    const r = await fetch(API+"/api/CheckKey?token="+encodeURIComponent(token), { headers: adminHeaders() });
-    const d = await r.json();
-    if(!d.ok) throw new Error(d.error);
-    if(!d.exists){ setOut("out-check","Key does not exist in system","err"); return; }
+    const d = await apiGet("/api/CheckKey?token=" + encodeURIComponent(token));
+    if (!d.exists) { setOut("out-check", "Key does not exist in system", "err"); return; }
     const created = new Date(d.createdAt).toLocaleString();
-    if(!d.used){
+    if (!d.used) {
       setOut("out-check",
-        `<span style="color:var(--acc)">✓ Key exists and is unused</span>\n`+
-        `Created: ${created}`,
+        `<span style="color:var(--acc)">✓ Key exists and is unused</span>\nCreated: ${created}`,
         "ok"
       );
     } else {
       const usedAt = new Date(d.usedBy.ts).toLocaleString();
       setOut("out-check",
-        `<span style="color:var(--red)">⚠ Key is used</span>\n`+
-        `IP: ${d.usedBy.ip}\n`+
-        `UA: ${d.usedBy.ua}\n`+
-        `Used at: ${usedAt}\n`+
-        `Created: ${created}`,
+        `<span style="color:var(--red)">⚠ Key is used</span>\n` +
+        `IP: ${d.usedBy.ip}\nUA: ${d.usedBy.ua}\nUsed at: ${usedAt}\nCreated: ${created}`,
         "err"
       );
     }
-  } catch(e){ setOut("out-check", e.message, "err"); }
+  } catch (e) { setOut("out-check", e.message, "err"); }
 }
 
+// ── Delete key — DELETE /api/DeleteKey?token= ────────────────────────────────
 async function doDeleteKey(token) {
   const t = token || document.getElementById("deleteInput").value.trim();
-  if(!t){ toast("Enter a key to delete","err"); return; }
-  if(!confirm(`Delete key: ${t.slice(0,16)}…?\nThis cannot be undone.`)) return;
+  if (!t) { toast("Enter a key to delete", "err"); return; }
+  if (!confirm(`Delete key: ${t.slice(0, 16)}…?\nThis cannot be undone.`)) return;
   try {
-    const r = await fetch(API+"/api/DeleteKey?token="+encodeURIComponent(t), {
-      method:"DELETE",
-      headers: adminHeaders(),
-    });
-    const d = await r.json();
-    if(!d.ok) throw new Error(d.error);
+    await apiDelete("/api/DeleteKey?token=" + encodeURIComponent(t));
     setOut("out-delete", `Key deleted: ${t}`, "ok");
-    toast("Key deleted","ok");
-    document.getElementById("deleteInput").value="";
+    toast("Key deleted", "ok");
+    document.getElementById("deleteInput").value = "";
     loadStats();
-    doGetUsedKeys(); // refresh table
-  } catch(e){ setOut("out-delete", e.message, "err"); toast("Delete failed","err"); }
-}
-
-async function doGetUsedKeys() {
-  const tbody = document.getElementById("usedKeysBody");
-  tbody.innerHTML=`<tr class="empty-row"><td colspan="5">Loading…</td></tr>`;
-  try {
-    const d = await apiGet("/api/GetUsedKeys");
-    document.getElementById("stat-used").textContent = d.keys.length;
-    if(d.keys.length===0){
-      tbody.innerHTML=`<tr class="empty-row"><td colspan="5">No used keys yet</td></tr>`;
-      return;
-    }
-    tbody.innerHTML = d.keys.map(k => {
-      const ua = (k.usedBy?.ua||"").slice(0,60)+(k.usedBy?.ua?.length>60?"…":"");
-      const ts = k.usedBy?.ts ? new Date(k.usedBy.ts).toLocaleString() : "—";
-      const ip = k.usedBy?.ip||"—";
-      return `<tr>
-        <td><div class="key-token">${k.token.slice(0,16)}…</div></td>
-        <td><div class="key-meta">${ip}</div></td>
-        <td><div class="key-meta" title="${k.usedBy?.ua||''}">${ua||"—"}</div></td>
-        <td><div class="key-meta">${ts}</div></td>
-        <td><button class="del-btn" onclick="doDeleteKey('${k.token}')" title="Delete key">✕</button></td>
-      </tr>`;
-    }).join("");
-  } catch(e){
-    tbody.innerHTML=`<tr class="empty-row"><td colspan="5">Error: ${e.message}</td></tr>`;
+    doGetUsedKeys();
+  } catch (e) {
+    setOut("out-delete", e.message, "err");
+    toast("Delete failed", "err");
   }
 }
 
+// ── Used keys table — GET /api/GetUsedKeys ────────────────────────────────────
+async function doGetUsedKeys() {
+  const tbody = document.getElementById("usedKeysBody");
+  tbody.innerHTML = `<tr class="empty-row"><td colspan="5">Loading…</td></tr>`;
+  try {
+    const d = await apiGet("/api/GetUsedKeys");
+    document.getElementById("stat-used").textContent = d.keys.length;
+    if (d.keys.length === 0) {
+      tbody.innerHTML = `<tr class="empty-row"><td colspan="5">No used keys yet</td></tr>`;
+      return;
+    }
+    tbody.innerHTML = d.keys.map(k => {
+      const ua    = (k.usedBy?.ua || "").slice(0, 60) + (k.usedBy?.ua?.length > 60 ? "…" : "");
+      const ts    = k.usedBy?.ts ? new Date(k.usedBy.ts).toLocaleString() : "—";
+      const ip    = k.usedBy?.ip || "—";
+      // Escape token for inline onclick in case it contains special chars
+      const tEsc  = k.token.replace(/'/g, "\\'");
+      return `<tr>
+        <td><div class="key-token">${k.token.slice(0, 16)}…</div></td>
+        <td><div class="key-meta">${ip}</div></td>
+        <td><div class="key-meta" title="${k.usedBy?.ua || ''}">${ua || "—"}</div></td>
+        <td><div class="key-meta">${ts}</div></td>
+        <td><button class="del-btn" onclick="doDeleteKey('${tEsc}')" title="Delete key">✕</button></td>
+      </tr>`;
+    }).join("");
+  } catch (e) {
+    tbody.innerHTML = `<tr class="empty-row"><td colspan="5">Error: ${e.message}</td></tr>`;
+  }
+}
+
+// ── Clipboard ────────────────────────────────────────────────────────────────
 function copyToClipboard(text, btn) {
-  navigator.clipboard.writeText(text).then(()=>{
-    const orig = btn.textContent; btn.textContent="Copied!";
-    setTimeout(()=>btn.textContent=orig, 1500);
-    toast("Copied to clipboard","ok");
+  navigator.clipboard.writeText(text).then(() => {
+    const orig = btn.textContent; btn.textContent = "Copied!";
+    setTimeout(() => btn.textContent = orig, 1500);
+    toast("Copied to clipboard", "ok");
   });
 }
 </script>
